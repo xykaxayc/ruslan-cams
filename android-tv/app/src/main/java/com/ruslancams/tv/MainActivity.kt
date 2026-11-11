@@ -12,6 +12,7 @@ import com.ruslancams.tv.databinding.ActivityMainBinding
 import com.ruslancams.tv.model.CameraItem
 import com.ruslancams.tv.model.GridConfig
 import com.ruslancams.tv.player.CamPlayerManager
+import com.ruslancams.tv.update.AppUpdateManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -47,6 +48,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val updateCheckHandler = Handler(Looper.getMainLooper())
+    private val updateCheckRunnable = object : Runnable {
+        override fun run() {
+            AppUpdateManager.checkForUpdates(this@MainActivity)
+            updateCheckHandler.postDelayed(this, 60 * 60 * 1000L) // check every 1 hour
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -69,6 +78,7 @@ class MainActivity : AppCompatActivity() {
         super.onStart()
         hideSystemUI()
         startMosaicPlayer()
+        updateCheckHandler.post(updateCheckRunnable)
     }
 
     override fun onResume() {
@@ -81,6 +91,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
+        updateCheckHandler.removeCallbacks(updateCheckRunnable)
         stopMosaicPlayer()
         fullscreenPlayer?.release()
         fullscreenPlayer = null
