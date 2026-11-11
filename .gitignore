@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv*/
+venv/
+*.log
+logs/
+*.csv
+
+# Sensitive credentials & config
+cams.json
+.htpasswd
+ezviz/private/
+
+# Binaries & heavy test media
+bin/go2rtc
+p2p/RSP2PServer
+p2p/bindif.dylib
+check/*.png
+check/*.jpg
+mosaics/
+
+# Android build & local settings
+android-tv/.gradle/
+android-tv/build/
+android-tv/*/build/
+android-tv/local.properties
+android-tv/.idea/
+android-tv/*.iml
+android-tv/*/*.iml
+android-tv/.DS_Store
+android-tv/app/.DS_Store
+android-tv/**/.DS_Store
+
+# macOS
+.DS_Store
+._*

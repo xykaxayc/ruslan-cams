@@ -1,0 +1,80 @@
+{
+ "go2rtc": 1984,
+ "cams": [
+  {
+   "id": "karamova_5",
+   "title": "Карамова · Камера 5",
+   "default": "sub",
+   "streams": {
+    "sub": "karamova_5",
+    "main": "karamova_5_main"
+   }
+  },
+  {
+   "id": "karamova_7",
+   "title": "Карамова · Камера 7",
+   "default": "sub",
+   "streams": {
+    "sub": "karamova_7",
+    "mobile": "karamova_7_mobile",
+    "main": "karamova_7_main"
+   }
+  },
+  {
+   "id": "kirtbaya_2",
+   "title": "Киртбая · Камера 2",
+   "default": "mobile",
+   "streams": {
+    "sub": "kirtbaya_2_sub",
+    "mobile": "kirtbaya_2",
+    "main": "kirtbaya_2_main"
+   }
+  },
+  {
+   "id": "kirtbaya_3",
+   "title": "Киртбая · Камера 3",
+   "default": "mobile",
+   "streams": {
+    "sub": "kirtbaya_3_sub",
+    "mobile": "kirtbaya_3",
+    "main": "kirtbaya_3_main"
+   }
+  },
+  {
+   "id": "lenina_4",
+   "title": "Ленина · Камера 4",
+   "default": "sub",
+   "streams": {
+    "sub": "lenina_4",
+    "mobile": "lenina_4_mobile",
+    "main": "lenina_4_main"
+   }
+  },
+  {
+   "id": "lenina_6",
+   "title": "Ленина · Камера 6",
+   "default": "sub",
+   "streams": {
+    "sub": "lenina_6",
+    "mobile": "lenina_6_mobile",
+    "main": "lenina_6_main"
+   }
+  },
+  {
+   "id": "ezviz_fridge_entry",
+   "title": "EZVIZ · Хол-ник вход",
+   "default": "default",
+   "streams": {
+    "default": "ezviz_fridge_entry"
+   }
+  },
+  {
+   "id": "ezviz_general",
+   "title": "EZVIZ · Общий вид",
+   "default": "default",
+   "streams": {
+    "default": "ezviz_general"
+   }
+  }
+ ]
+}

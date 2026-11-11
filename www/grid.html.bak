@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Камеры</title>
+<style>
+  * { box-sizing: border-box; }
+  html { height: 100%; background: #000; }
+  body {
+    margin: 0; height: 100vh; height: 100dvh;
+    display: flex; flex-direction: column; overflow: hidden; background: #000;
+    font-family: -apple-system, system-ui, sans-serif;
+    padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+             env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  }
+  .toolbar {
+    flex: 0 0 auto; display: flex; align-items: center;
+    min-height: 44px; padding: 6px 8px; background: #0b0b0b; color: #ddd;
+  }
+  .buffer-setting { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .buffer-setting select, .stream-select {
+    min-height: 32px; padding: 5px 8px; border: 1px solid rgba(255,255,255,.4);
+    border-radius: 4px; background: #171717; color: #fff;
+    font: 12px -apple-system, system-ui, sans-serif;
+  }
+  select:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  #grid {
+    flex: 1 1 auto; min-height: 0; min-width: 0; width: 100%;
+    display: grid; gap: 2px; overflow: auto; align-content: start;
+    overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin; scrollbar-color: #555 #111;
+  }
+  .cell {
+    position: relative; min-width: 0; min-height: 0; overflow: hidden;
+    background: #111; container-type: inline-size;
+  }
+  .cell iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .cell .t {
+    position: absolute; left: 8px; right: 8px; bottom: 8px;
+    color: #fff; font-size: 14px; font-size: clamp(12px, 3.4cqw, 28px);
+    line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    text-shadow: 0 1px 3px #000, 0 0 6px #000; pointer-events: none;
+  }
+  .stream-select {
+    position: absolute; z-index: 2; top: 8px; right: 8px;
+    max-width: calc(100% - 16px); min-width: 0;
+    font-size: 12px; font-size: clamp(12px, 2.4cqw, 18px);
+  }
+  .stream-select option { background: #111; color: #fff; }
+  @media (pointer: coarse) {
+    .buffer-setting select, .stream-select { min-height: 44px; }
+  }
+  #err { color: #ddd; padding: 20px; }
+</style>
+</head>
+<body>
+<header class="toolbar">
+  <label class="buffer-setting">Буфер:
+    <select id="buffer" aria-label="Буфер воспроизведения">
+      <option value="1">1 с</option><option value="2">2 с</option><option value="4">4 с</option>
+      <option value="6">6 с</option><option value="10">10 с</option>
+    </select>
+  </label>
+</header>
+<main id="grid" aria-label="Камеры наблюдения"></main>
+<script>
+const preferences = {
+  get(key) { try { return localStorage.getItem(key); } catch (_) { return null; } },
+  set(key, value) { try { localStorage.setItem(key, value); } catch (_) {} }
+};
+fetch('grid.json?' + Date.now()).then(r => r.json()).then(cfg => {
+  const signature = JSON.stringify(cfg);
+  // A recovered recorder changes grid.json; rebuild the grid without manual refresh.
+  setInterval(async () => {
+    try {
+      const response = await fetch('grid.json?' + Date.now(), {cache: 'no-store'});
+      if (response.ok && JSON.stringify(await response.json()) !== signature) location.reload();
+    } catch (_) { /* HTTP service may be restarting. Retry on the next tick. */ }
+  }, 15000);
+  const selector = document.getElementById('buffer');
+  const savedBuffer = preferences.get('cam-buffer') || '4';
+  selector.value = ['1','2','4','6','10'].includes(savedBuffer) ? savedBuffer : '4';
+  selector.addEventListener('change', () => {
+    preferences.set('cam-buffer', selector.value);
+    location.reload();
+  });
+  const grid = document.getElementById('grid');
+  // Choose columns from the container's shape, then keep small screens scrollable.
+  function layoutGrid() {
+    const n = cfg.cams.length;
+    if (!n) return;
+    const width = grid.clientWidth, height = grid.clientHeight, gap = 2;
+    const maxColumns = Math.min(n, Math.max(1, Math.floor((width + gap) / 282)));
+    let best = {area: -1, columns: 1};
+    for (let columns = 1; columns <= maxColumns; columns++) {
+      const rows = Math.ceil(n / columns);
+      const tileWidth = (width - gap * (columns - 1)) / columns;
+      const tileHeight = (height - gap * (rows - 1)) / rows;
+      const videoWidth = Math.min(tileWidth, tileHeight * 16 / 9);
+      const area = videoWidth * videoWidth * 9 / 16;
+      if (area > best.area) best = {area, columns, rows, tileWidth, tileHeight};
+    }
+    const scroll = best.tileHeight < Math.min(180, best.tileWidth * 9 / 16);
+    grid.style.gridTemplateColumns = `repeat(${best.columns}, minmax(0, 1fr))`;
+    grid.style.gridTemplateRows = scroll
+      ? `repeat(${best.rows}, ${Math.max(140, Math.round(best.tileWidth * 9 / 16))}px)`
+      : `repeat(${best.rows}, minmax(0, 1fr))`;
+  }
+  let layoutFrame = 0;
+  const scheduleLayout = () => {
+    cancelAnimationFrame(layoutFrame);
+    layoutFrame = requestAnimationFrame(layoutGrid);
+  };
+  if (window.ResizeObserver) new ResizeObserver(scheduleLayout).observe(grid);
+  window.addEventListener('resize', scheduleLayout);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', scheduleLayout);
+  const player = (id, kind) => `${location.origin}/player.html?src=${encodeURIComponent(id)}&go2rtc=${cfg.go2rtc}&buffer=${selector.value}&v=6`;
+  const labels = {sub: 'Дополнительный (sub)', mobile: 'Мобильный', main: 'Основной (HD)', default: 'Поток'};
+  const order = {sub: 0, mobile: 1, main: 2, default: 3};
+  for (const c of cfg.cams) {
+    const streams = c.streams || {default: c.id};
+    const kinds = Object.keys(streams).sort((a, b) => (order[a] ?? 4) - (order[b] ?? 4));
+    const storageKey = `cam-stream:${c.id}`;
+    const saved = preferences.get(storageKey);
+    const selected = (streams[saved] ? saved : (streams[c.default] ? c.default : kinds[0]));
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    const f = document.createElement('iframe');
+    f.allow = 'autoplay';
+    f.title = c.title;
+    f.src = player(streams[selected]);
+    const select = document.createElement('select');
+    select.className = 'stream-select';
+    select.setAttribute('aria-label', `Поток: ${c.title}`);
+    for (const kind of kinds) {
+      const option = document.createElement('option');
+      option.value = kind;
+      option.textContent = labels[kind] || kind;
+      select.append(option);
+    }
+    select.value = selected;
+    select.addEventListener('change', () => {
+      const kind = select.value;
+      preferences.set(storageKey, kind);
+      f.src = player(streams[kind]);
+    });
+    const t = document.createElement('div');
+    t.className = 't'; t.textContent = c.title; t.title = c.title;
+    cell.append(f, select, t); grid.append(cell);
+  }
+  layoutGrid();
+}).catch(e => { document.body.innerHTML = '<div id="err">Нет grid.json: ' + e + '</div>'; });
+</script>
+</body>
+</html>

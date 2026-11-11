@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Камеры Руслана</string>
+    <string name="status_live">В ЭФИРЕ</string>
+    <string name="status_connecting">Подключение…</string>
+    <string name="status_reconnecting">Восстановление…</string>
+    <string name="status_error">Ошибка потока</string>
+    <string name="hint_dpad">Используйте стрелки для выбора камеры • OK — на весь экран • Назад — возврат в сетку</string>
+</resources>

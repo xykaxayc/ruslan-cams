@@ -1,0 +1,56 @@
+{
+  "_comment": "Регистраторы по P2P ID и камеры для сетки. Скопируйте в cams.json и заполните пароли.",
+  "devices": {
+    "DEVICE_ID_1": "karamova",
+    "DEVICE_ID_2": "kirtbaya",
+    "DEVICE_ID_3": "lenina"
+  },
+  "passwords": {
+    "karamova": "YOUR_PASSWORD_HERE",
+    "kirtbaya": "YOUR_PASSWORD_HERE",
+    "lenina": "YOUR_PASSWORD_HERE"
+  },
+  "rtsp_ports": {
+    "lenina": 554
+  },
+  "grid": [
+    {
+      "id": "karamova_5",
+      "device": "karamova",
+      "channel": 5,
+      "title": "Карамова · Камера 5"
+    },
+    {
+      "id": "karamova_7",
+      "device": "karamova",
+      "channel": 7,
+      "title": "Карамова · Камера 7"
+    },
+    {
+      "id": "kirtbaya_2",
+      "device": "kirtbaya",
+      "channel": 2,
+      "title": "Киртбая · Камера 2",
+      "stream": "mobile"
+    },
+    {
+      "id": "kirtbaya_3",
+      "device": "kirtbaya",
+      "channel": 3,
+      "title": "Киртбая · Камера 3",
+      "stream": "mobile"
+    },
+    {
+      "id": "lenina_4",
+      "device": "lenina",
+      "channel": 4,
+      "title": "Ленина · Камера 4"
+    },
+    {
+      "id": "lenina_6",
+      "device": "lenina",
+      "channel": 6,
+      "title": "Ленина · Камера 6"
+    }
+  ]
+}

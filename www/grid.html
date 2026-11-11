@@ -1,0 +1,1187 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Камеры наблюдения</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  :root {
+    --bg-main: #0a0c10;
+    --bg-surface: rgba(18, 22, 31, 0.78);
+    --bg-surface-solid: #12161f;
+    --bg-card: #0e121a;
+    --bg-card-hover: #141a26;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-hover: rgba(255, 255, 255, 0.22);
+    --border-focus: #3b82f6;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --danger: #ef4444;
+    --live-green: #10b981;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  html, body {
+    height: 100%;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: var(--font-stack);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+             env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  }
+
+  /* Toolbar */
+  .toolbar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 52px;
+    padding: 0 16px;
+    background: var(--bg-surface);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border-subtle);
+    z-index: 20;
+    gap: 12px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    user-select: none;
+  }
+
+  .brand-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+    flex-shrink: 0;
+  }
+
+  .brand-icon svg {
+    width: 15px;
+    height: 15px;
+    color: #fff;
+    fill: currentColor;
+  }
+
+  .brand-text {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .brand-title {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+  }
+
+  .badge-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 7px;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--live-green);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .badge-live::before {
+    content: '';
+    display: block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: var(--live-green);
+    box-shadow: 0 0 5px var(--live-green);
+    animation: live-pulse 2s infinite ease-in-out;
+  }
+
+  @keyframes live-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(0.85); }
+  }
+
+  .nav-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .control-group {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .custom-select {
+    position: relative;
+    display: inline-block;
+  }
+
+  .custom-select select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    padding: 5px 26px 5px 9px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .custom-select select:hover {
+    background: rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .custom-select select:focus {
+    outline: none;
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+  }
+
+  .custom-select::after {
+    content: '';
+    position: absolute;
+    right: 9px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 3.5px solid transparent;
+    border-right: 3.5px solid transparent;
+    border-top: 4.5px solid var(--text-muted);
+    pointer-events: none;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+  }
+
+  .btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .btn.active {
+    background: rgba(37, 99, 235, 0.2);
+    color: #60a5fa;
+    border-color: rgba(37, 99, 235, 0.5);
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  .btn-primary:hover {
+    background: var(--accent-hover);
+    color: #fff;
+    border-color: var(--accent-hover);
+  }
+
+  .btn-icon {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+  }
+
+  .btn svg, .btn-icon svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+    flex-shrink: 0;
+  }
+
+  /* Grid Area */
+  #grid-container {
+    flex: 1 1 auto;
+    position: relative;
+    padding: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #grid {
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    gap: 10px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    align-content: start;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+
+  #grid::-webkit-scrollbar {
+    width: 6px;
+  }
+  #grid::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 3px;
+  }
+
+  /* Camera Card */
+  .cell {
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+    border-radius: var(--radius-md);
+    background: #000;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border-subtle);
+    overflow: hidden;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease, opacity 0.2s ease;
+    contain: layout style;
+  }
+
+  .cell:hover {
+    border-color: var(--border-hover);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.65);
+  }
+
+  .cell.drag-source {
+    opacity: 0.35;
+    border: 2px dashed #3b82f6 !important;
+  }
+
+  .cell.drag-over {
+    border: 2px solid #3b82f6 !important;
+    transform: scale(0.985);
+  }
+
+  .cell iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: #000;
+  }
+
+  /* Overlay in card */
+  .cell-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 44px;
+    padding: 7px 9px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0) 100%);
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0.9;
+    transition: opacity 0.2s ease;
+  }
+
+  .cell:hover .cell-header {
+    opacity: 1;
+  }
+
+  .cell-title-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-sm);
+    color: #fff;
+    font-size: 11.5px;
+    font-weight: 500;
+    max-width: 58%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    pointer-events: auto;
+  }
+
+  .camera-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--live-green);
+    flex-shrink: 0;
+  }
+
+  .cell-actions {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    pointer-events: auto;
+  }
+
+  .drag-handle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-sm);
+    color: #cbd5e1;
+    cursor: grab;
+    transition: all 0.15s ease;
+  }
+
+  .drag-handle:active {
+    cursor: grabbing;
+  }
+
+  .drag-handle svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+  }
+
+  body.edit-mode .drag-handle {
+    display: inline-flex;
+  }
+
+  body.edit-mode .cell-remove-btn {
+    display: inline-flex;
+  }
+
+  .cell-remove-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    border-radius: var(--radius-sm);
+    color: #fca5a5;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .cell-remove-btn:hover {
+    background: rgba(239, 68, 68, 0.9);
+    color: #fff;
+    border-color: #ef4444;
+  }
+
+  .cell-remove-btn svg {
+    width: 12px;
+    height: 12px;
+    fill: currentColor;
+  }
+
+  .stream-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-sm);
+    color: #cbd5e1;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 18px 3px 7px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    transition: all 0.15s ease;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="9" height="5" viewBox="0 0 9 5"><path fill="%2394a3b8" d="M0 0l4.5 5 4.5-5z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 5px center;
+  }
+
+  .stream-select:hover {
+    background-color: rgba(30, 41, 59, 0.9);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  .stream-select:focus {
+    outline: none;
+    border-color: var(--border-focus);
+  }
+
+  .stream-select option {
+    background: #0f172a;
+    color: #fff;
+    font-size: 12px;
+  }
+
+  .cell-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-sm);
+    color: #cbd5e1;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    transition: all 0.15s ease;
+  }
+
+  .cell-btn:hover {
+    background: rgba(30, 41, 59, 0.9);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  .cell-btn svg {
+    width: 12px;
+    height: 12px;
+    fill: currentColor;
+  }
+
+  /* Fullscreen single camera */
+  .cell.fullscreen-mode {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 100 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    border-radius: 0 !important;
+    border: none !important;
+  }
+
+  /* Modals */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .modal {
+    width: 100%;
+    max-width: 500px;
+    background: var(--bg-surface-solid);
+    border: 1px solid var(--border-hover);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.2s ease;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .modal-overlay.open .modal {
+    transform: translateY(0) scale(1);
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .modal-title {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .modal-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+
+  .form-input, .form-select {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    padding: 8px 12px;
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
+    transition: all 0.15s ease;
+  }
+
+  .form-input:focus, .form-select:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+  }
+
+  .form-select option {
+    background: #12161f;
+    color: #fff;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px;
+    background: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 300;
+    background: var(--bg-surface-solid);
+    border: 1px solid var(--border-hover);
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transform: translateY(50px);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .toast.show {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .toast-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--live-green);
+  }
+
+  @media (max-width: 768px) {
+    .toolbar {
+      height: 48px;
+      padding: 0 10px;
+    }
+    .brand-title {
+      font-size: 13px;
+    }
+    .badge-live {
+      padding: 2px 5px;
+      font-size: 9px;
+    }
+    .control-group span {
+      display: none;
+    }
+    .btn-text {
+      display: none;
+    }
+    #grid-container {
+      padding: 6px;
+    }
+    #grid {
+      gap: 6px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header class="toolbar">
+  <div class="brand">
+    <div class="brand-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+    </div>
+    <div class="brand-text">
+      <span class="brand-title">Видеонаблюдение</span>
+      <span class="badge-live">В эфире</span>
+    </div>
+  </div>
+
+  <div class="nav-controls">
+    <button id="btn-add-camera" class="btn" title="Добавить камеру">
+      <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      <span class="btn-text">Добавить</span>
+    </button>
+    <button id="btn-edit-order" class="btn" title="Настроить порядок и состав камер">
+      <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+      <span class="btn-text">Распорядок</span>
+    </button>
+    
+    <div class="control-group">
+      <span>Буфер:</span>
+      <div class="custom-select">
+        <select id="buffer" aria-label="Буфер воспроизведения">
+          <option value="1">1 сек</option>
+          <option value="2">2 сек</option>
+          <option value="4">4 сек (рек.)</option>
+          <option value="6">6 сек</option>
+          <option value="10">10 сек</option>
+        </select>
+      </div>
+    </div>
+
+    <button id="btn-fullscreen" class="btn btn-icon" title="На весь экран" aria-label="Полноэкранный режим">
+      <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="grid-container">
+  <div id="grid" aria-label="Камеры наблюдения"></div>
+</main>
+
+<!-- Modal: Add Camera -->
+<div id="modal-add" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Добавить камеру</h3>
+      <button class="btn btn-icon btn-close-modal" aria-label="Закрыть">
+        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label" for="add-device">Регистратор / Источник</label>
+        <select id="add-device" class="form-select">
+          <option value="karamova">Карамова (NVR)</option>
+          <option value="kirtbaya">Киртбая (NVR)</option>
+          <option value="lenina">Ленина (NVR)</option>
+          <option value="custom_stream">Прямой поток go2rtc / EZVIZ</option>
+        </select>
+      </div>
+      
+      <div id="nvr-fields" class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="add-channel">Канал регистратора</label>
+          <input id="add-channel" class="form-input" type="number" min="1" max="32" value="1" placeholder="1-16">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="add-stream-pref">Поток по умолчанию</label>
+          <select id="add-stream-pref" class="form-select">
+            <option value="sub">Sub (дополнительный)</option>
+            <option value="mobile">Mobile (мобильный)</option>
+            <option value="main">Main (HD / основной)</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="custom-stream-fields" class="form-group" style="display: none;">
+        <label class="form-label" for="add-stream-id">ID потока в системе</label>
+        <input id="add-stream-id" class="form-input" type="text" placeholder="например ezviz_fridge_entry или custom_cam">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="add-title">Название камеры для отображения</label>
+        <input id="add-title" class="form-input" type="text" placeholder="например Карамова · Вход или Склад">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-close-modal">Отмена</button>
+      <button id="btn-confirm-add" class="btn btn-primary">Добавить в сетку</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast">
+  <span class="toast-dot"></span>
+  <span id="toast-text">Изменения сохранены на сервере</span>
+</div>
+
+<script>
+const preferences = {
+  get(key) { try { return localStorage.getItem(key); } catch (_) { return null; } },
+  set(key, value) { try { localStorage.setItem(key, value); } catch (_) {} }
+};
+
+let currentCfg = null;
+let currentCams = [];
+let isEditMode = false;
+let draggedIndex = null;
+let ignoreNextReload = false;
+
+const toast = document.getElementById('toast');
+const toastText = document.getElementById('toast-text');
+function showToast(msg) {
+  toastText.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// Server Synchronization
+async function syncToServer() {
+  ignoreNextReload = true;
+  try {
+    const res = await fetch('/api/save-grid', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cams: currentCams })
+    });
+    if (res.ok) {
+      showToast('Синхронизировано со всеми устройствами');
+    }
+  } catch (err) {
+    console.warn('Sync failed:', err);
+  }
+}
+
+// Fullscreen
+const fullScreenBtn = document.getElementById('btn-fullscreen');
+if (fullScreenBtn) {
+  fullScreenBtn.addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  });
+}
+
+// Buffer selector
+const selector = document.getElementById('buffer');
+const savedBuffer = preferences.get('cam-buffer') || '4';
+selector.value = ['1','2','4','6','10'].includes(savedBuffer) ? savedBuffer : '4';
+selector.addEventListener('change', () => {
+  preferences.set('cam-buffer', selector.value);
+  location.reload();
+});
+
+// Edit Mode
+const editBtn = document.getElementById('btn-edit-order');
+editBtn.addEventListener('click', () => {
+  isEditMode = !isEditMode;
+  document.body.classList.toggle('edit-mode', isEditMode);
+  editBtn.classList.toggle('active', isEditMode);
+  if (isEditMode) {
+    showToast('Перетаскивайте камеры за иконку ⠿ или удаляйте');
+  } else {
+    syncToServer();
+  }
+});
+
+// Modal
+const addBtn = document.getElementById('btn-add-camera');
+const addModal = document.getElementById('modal-add');
+const addDevice = document.getElementById('add-device');
+const nvrFields = document.getElementById('nvr-fields');
+const customFields = document.getElementById('custom-stream-fields');
+const closeButtons = document.querySelectorAll('.btn-close-modal');
+
+addBtn.addEventListener('click', () => {
+  addModal.classList.add('open');
+});
+
+closeButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    addModal.classList.remove('open');
+  });
+});
+
+addDevice.addEventListener('change', () => {
+  if (addDevice.value === 'custom_stream') {
+    nvrFields.style.display = 'none';
+    customFields.style.display = 'flex';
+  } else {
+    nvrFields.style.display = 'grid';
+    customFields.style.display = 'none';
+  }
+});
+
+// Add Camera
+document.getElementById('btn-confirm-add').addEventListener('click', () => {
+  const device = addDevice.value;
+  const title = document.getElementById('add-title').value.trim() || 'Новая камера';
+  
+  if (device === 'custom_stream') {
+    const streamId = document.getElementById('add-stream-id').value.trim();
+    if (!streamId) {
+      alert('Укажите ID потока');
+      return;
+    }
+    const newCam = {
+      id: streamId,
+      title: title,
+      default: 'default',
+      streams: { default: streamId }
+    };
+    currentCams.push(newCam);
+  } else {
+    const channel = parseInt(document.getElementById('add-channel').value, 10) || 1;
+    const pref = document.getElementById('add-stream-pref').value;
+    const camId = `${device}_${channel}`;
+    const newCam = {
+      id: camId,
+      title: title,
+      default: pref,
+      streams: {
+        [pref]: camId,
+        ...(pref !== 'main' ? { main: `${camId}_main` } : {}),
+        ...(pref !== 'sub' ? { sub: `${camId}_sub` } : {})
+      }
+    };
+    currentCams.push(newCam);
+  }
+
+  renderGrid();
+  syncToServer();
+  addModal.classList.remove('open');
+  showToast(`Камера «${title}» добавлена и сохранена`);
+});
+
+// Grid & Layout
+const grid = document.getElementById('grid');
+
+function layoutGrid() {
+  const n = currentCams.length;
+  if (!n) return;
+  const width = grid.clientWidth;
+  const height = grid.clientHeight;
+  const gap = 10;
+  
+  const maxColumns = Math.min(n, Math.max(1, Math.floor((width + gap) / 280)));
+  let best = {area: -1, columns: 1, rows: n};
+
+  for (let columns = 1; columns <= maxColumns; columns++) {
+    const rows = Math.ceil(n / columns);
+    const tileWidth = (width - gap * (columns - 1)) / columns;
+    const tileHeight = (height - gap * (rows - 1)) / rows;
+    const videoWidth = Math.min(tileWidth, tileHeight * (16 / 9));
+    const area = videoWidth * videoWidth * (9 / 16);
+    if (area > best.area) {
+      best = {area, columns, rows, tileWidth, tileHeight};
+    }
+  }
+
+  const scroll = best.tileHeight < Math.min(200, best.tileWidth * (9 / 16));
+  grid.style.gridTemplateColumns = `repeat(${best.columns}, minmax(0, 1fr))`;
+  grid.style.gridTemplateRows = scroll
+    ? `repeat(${best.rows}, ${Math.max(160, Math.round(best.tileWidth * 9 / 16))}px)`
+    : `repeat(${best.rows}, minmax(0, 1fr))`;
+}
+
+let layoutFrame = 0;
+const scheduleLayout = () => {
+  cancelAnimationFrame(layoutFrame);
+  layoutFrame = requestAnimationFrame(layoutGrid);
+};
+
+if (window.ResizeObserver) new ResizeObserver(scheduleLayout).observe(grid);
+window.addEventListener('resize', scheduleLayout);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', scheduleLayout);
+
+const player = (id) => `${location.origin}/player.html?src=${encodeURIComponent(id)}&go2rtc=${currentCfg.go2rtc}&buffer=${selector.value}&v=8`;
+const labels = {
+  sub: 'Sub (быстрый)',
+  mobile: 'Mobile',
+  main: 'HD (основной)',
+  default: 'Поток'
+};
+const order = {sub: 0, mobile: 1, main: 2, default: 3};
+
+function renderGrid() {
+  grid.innerHTML = '';
+  
+  currentCams.forEach((c, index) => {
+    const streams = c.streams || {default: c.id};
+    const kinds = Object.keys(streams).sort((a, b) => (order[a] ?? 4) - (order[b] ?? 4));
+    const storageKey = `cam-stream:${c.id}`;
+    const saved = preferences.get(storageKey);
+    const selected = (streams[saved] ? saved : (streams[c.default] ? c.default : kinds[0]));
+
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.dataset.index = index;
+    cell.dataset.id = c.id;
+    cell.setAttribute('draggable', 'false');
+
+    // Video frame
+    const iframe = document.createElement('iframe');
+    iframe.allow = 'autoplay; fullscreen';
+    iframe.title = c.title;
+    iframe.src = player(streams[selected]);
+
+    // Top Header Bar
+    const header = document.createElement('div');
+    header.className = 'cell-header';
+
+    const titleBadge = document.createElement('div');
+    titleBadge.className = 'cell-title-badge';
+    titleBadge.title = c.title;
+    
+    const dot = document.createElement('span');
+    dot.className = 'camera-dot';
+    
+    const titleText = document.createElement('span');
+    titleText.textContent = c.title;
+
+    titleBadge.append(dot, titleText);
+
+    const actions = document.createElement('div');
+    actions.className = 'cell-actions';
+
+    // Drag handle
+    const dragHandle = document.createElement('div');
+    dragHandle.className = 'drag-handle';
+    dragHandle.setAttribute('title', 'Потяните для изменения порядка');
+    dragHandle.innerHTML = '<svg viewBox="0 0 24 24"><path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>';
+    
+    dragHandle.addEventListener('mousedown', () => {
+      cell.setAttribute('draggable', 'true');
+    });
+    dragHandle.addEventListener('mouseup', () => {
+      cell.setAttribute('draggable', 'false');
+    });
+
+    // Remove button in edit mode
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'cell-remove-btn';
+    removeBtn.setAttribute('title', 'Удалить камеру из сетки');
+    removeBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>';
+    removeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      currentCams.splice(index, 1);
+      renderGrid();
+      syncToServer();
+      showToast(`Камера «${c.title}» удалена`);
+    });
+
+    // Stream selector dropdown
+    if (kinds.length > 1) {
+      const select = document.createElement('select');
+      select.className = 'stream-select';
+      select.setAttribute('aria-label', `Поток: ${c.title}`);
+
+      for (const kind of kinds) {
+        const option = document.createElement('option');
+        option.value = kind;
+        option.textContent = labels[kind] || kind;
+        select.append(option);
+      }
+
+      select.value = selected;
+      select.addEventListener('change', () => {
+        const kind = select.value;
+        preferences.set(storageKey, kind);
+        iframe.src = player(streams[kind]);
+      });
+      actions.append(select);
+    }
+
+    // Zoom button
+    const zoomBtn = document.createElement('button');
+    zoomBtn.className = 'cell-btn';
+    zoomBtn.setAttribute('title', 'Развернуть камеру');
+    zoomBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>';
+    
+    let isSingleFull = false;
+    zoomBtn.addEventListener('click', () => {
+      isSingleFull = !isSingleFull;
+      if (isSingleFull) {
+        cell.classList.add('fullscreen-mode');
+        zoomBtn.setAttribute('title', 'Свернуть камеру');
+        zoomBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-14v3h3v2h-5V5h-2z"/></svg>';
+      } else {
+        cell.classList.remove('fullscreen-mode');
+        zoomBtn.setAttribute('title', 'Развернуть камеру');
+        zoomBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>';
+      }
+    });
+
+    actions.append(dragHandle, removeBtn, zoomBtn);
+    header.append(titleBadge, actions);
+    cell.append(iframe, header);
+
+    // Drag and Drop Events
+    cell.addEventListener('dragstart', (e) => {
+      draggedIndex = index;
+      cell.classList.add('drag-source');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', index);
+    });
+
+    cell.addEventListener('dragend', () => {
+      cell.classList.remove('drag-source');
+      cell.setAttribute('draggable', 'false');
+      document.querySelectorAll('.cell').forEach(el => el.classList.remove('drag-over'));
+    });
+
+    cell.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      cell.classList.add('drag-over');
+    });
+
+    cell.addEventListener('dragleave', () => {
+      cell.classList.remove('drag-over');
+    });
+
+    cell.addEventListener('drop', (e) => {
+      e.preventDefault();
+      cell.classList.remove('drag-over');
+      const targetIndex = index;
+      if (draggedIndex !== null && draggedIndex !== targetIndex) {
+        const item = currentCams.splice(draggedIndex, 1)[0];
+        currentCams.splice(targetIndex, 0, item);
+        renderGrid();
+        syncToServer();
+        showToast('Порядок камер обновлен на сервере');
+      }
+    });
+
+    grid.append(cell);
+  });
+
+  layoutGrid();
+}
+
+// Initial Data Fetch
+let lastSignature = '';
+fetch('grid.json?' + Date.now()).then(r => {
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}).then(cfg => {
+  currentCfg = cfg;
+  currentCams = [...cfg.cams];
+  lastSignature = JSON.stringify(cfg);
+  renderGrid();
+
+  // Watch for configuration updates made from other devices
+  setInterval(async () => {
+    if (isEditMode || ignoreNextReload) {
+      ignoreNextReload = false;
+      return;
+    }
+    try {
+      const response = await fetch('grid.json?' + Date.now(), {cache: 'no-store'});
+      if (response.ok) {
+        const fresh = await response.json();
+        const sig = JSON.stringify(fresh);
+        if (sig !== lastSignature) {
+          lastSignature = sig;
+          currentCfg = fresh;
+          currentCams = [...fresh.cams];
+          renderGrid();
+        }
+      }
+    } catch (_) {}
+  }, 5000);
+
+}).catch(e => {
+  document.body.innerHTML = `
+    <div id="err" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#ef4444;gap:12px;">
+      <div>Не удалось загрузить конфигурацию камер: ${e.message}</div>
+      <button onclick="location.reload()" class="btn btn-primary">Повторить попытку</button>
+    </div>`;
+});
+</script>
+</body>
+</html>
