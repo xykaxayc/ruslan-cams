@@ -10,19 +10,21 @@
 </style>
 </head>
 <body>
-<script type="module" src="./video-stream.js?v=5"></script>
+<script type="module" src="./video-stream.js?v=7"></script>
 <script type="module">
   const params = new URLSearchParams(location.search);
   const name = params.get('src');
   const port = params.get('go2rtc') || '1984';
-  const buffer = parseFloat(params.get('buffer') ?? '4.0');
+  const buffer = parseFloat(params.get('buffer') ?? '1.0');
   const video = document.createElement('video-stream');
   video.mode = 'mse';
   video.background = true;
-  video.bufferSeconds = isNaN(buffer) ? 4.0 : buffer;
-  video.src = `${location.protocol}//${location.hostname}:${port}/api/ws?src=${encodeURIComponent(name)}`;
+  video.bufferSeconds = isNaN(buffer) ? 1.0 : buffer;
+  const isLocal = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
+  const wsHost = isLocal ? (location.hostname + ':' + port) : location.host;
+  video.src = location.protocol + '//' + wsHost + '/api/ws?src=' + encodeURIComponent(name);
   document.body.appendChild(video);
-  document.title = `${name} - Камера`;
+  document.title = name + ' - Камера';
 </script>
 </body>
 </html>

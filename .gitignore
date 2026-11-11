@@ -7,6 +7,9 @@ venv/
 *.log
 logs/
 *.csv
+*.apk
+*.bak
+*.pre-pwa
 
 # Sensitive credentials & config
 cams.json

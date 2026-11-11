@@ -443,13 +443,13 @@ export class VideoRTC extends HTMLElement {
         }
 
         const configured = Number(this.bufferSeconds);
-        const target = Number.isFinite(configured) ? Math.min(10, Math.max(1, configured)) : 4;
-        let rebuffer = true;
-        this.video.pause();
+        const target = Number.isFinite(configured) ? Math.min(5, Math.max(0.2, configured)) : 1.0;
+        let rebuffer = false;
+        this.play();
+
         if (this.mseWaiting) this.video.removeEventListener('waiting', this.mseWaiting);
         this.mseWaiting = () => {
             rebuffer = true;
-            this.video.pause();
         };
         this.video.addEventListener('waiting', this.mseWaiting);
 
@@ -476,23 +476,33 @@ export class VideoRTC extends HTMLElement {
                 if (!sb.updating && sb.buffered && sb.buffered.length) {
                     const end = sb.buffered.end(sb.buffered.length - 1);
                     const start0 = sb.buffered.start(sb.buffered.length - 1);
-                    // Seek only across a missing range, never on every incoming packet.
                     if (this.video.currentTime < start0) {
                         this.video.currentTime = start0;
-                        rebuffer = true;
                     }
                     const gap = end - this.video.currentTime;
-                    if (gap < .15) {
-                        rebuffer = true;
-                        this.video.pause();
-                    }
-                    if (rebuffer && gap >= target) {
+                    if (gap < 0.05) {
+                        if (!rebuffer) {
+                            rebuffer = true;
+                            this.video.pause();
+                        }
+                    } else if (rebuffer && gap >= Math.min(0.4, target)) {
                         rebuffer = false;
                         this.play();
+                    } else if (!rebuffer && this.video.paused) {
+                        this.play();
                     }
-                    this.video.playbackRate = rebuffer ? 1 :
-                        gap > target + 1.5 ? 1.03 : gap < target - .5 ? .97 : 1;
-                    const trim = Math.min(end - Math.max(30, target * 3), this.video.currentTime - 1);
+
+                    if (!rebuffer) {
+                        if (gap > target + 0.8) {
+                            this.video.playbackRate = 1.06;
+                        } else if (gap < target - 0.3 && gap > 0.1) {
+                            this.video.playbackRate = 0.94;
+                        } else {
+                            this.video.playbackRate = 1.0;
+                        }
+                    }
+
+                    const trim = Math.min(end - Math.max(15, target * 3), this.video.currentTime - 1);
                     if (trim > sb.buffered.start(0)) {
                         sb.remove(sb.buffered.start(0), trim);
                         ms.setLiveSeekableRange(trim, end);

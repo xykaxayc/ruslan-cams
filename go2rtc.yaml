@@ -2,85 +2,97 @@ api:
   listen: "127.0.0.1:1984"
   origin: "*"
 rtsp:
-  listen: "127.0.0.1:8554"
+  listen: ":8554"
 webrtc:
-  listen: ""
+  listen: ":8555"
+  candidates:
+    - 66.151.34.27:8555
 log:
   level: info
 streams:
   karamova_5_src:
     - rtsp://admin:${RL_PASS_KARAMOVA}@127.0.0.1:41000/rtsp/streaming?channel=5&subtype=1
   karamova_5:
-    - ffmpeg:karamova_5_src#video=h264#hardware=videotoolbox
+    - karamova_5_src
+    - ffmpeg:karamova_5_src#video=h264#raw=-preset ultrafast -tune zerolatency
   karamova_5_main_src:
     - rtsp://admin:${RL_PASS_KARAMOVA}@127.0.0.1:41000/rtsp/streaming?channel=5&subtype=0
   karamova_5_main:
-    - ffmpeg:karamova_5_main_src#video=h264#hardware=videotoolbox
+    - karamova_5_main_src
+    - ffmpeg:karamova_5_main_src#video=h264#raw=-preset ultrafast -tune zerolatency
   karamova_7_src:
     - rtsp://admin:${RL_PASS_KARAMOVA}@127.0.0.1:41000/rtsp/streaming?channel=7&subtype=1
   karamova_7:
-    - ffmpeg:karamova_7_src#video=h264#hardware=videotoolbox
+    - karamova_7_src
+    - ffmpeg:karamova_7_src#video=h264#raw=-preset ultrafast -tune zerolatency
   karamova_7_mobile_src:
     - rtsp://admin:${RL_PASS_KARAMOVA}@127.0.0.1:41000/rtsp/streaming?channel=7&subtype=2
   karamova_7_mobile:
-    - ffmpeg:karamova_7_mobile_src#video=h264#hardware=videotoolbox
+    - karamova_7_mobile_src
+    - ffmpeg:karamova_7_mobile_src#video=h264#raw=-preset ultrafast -tune zerolatency
   karamova_7_main_src:
     - rtsp://admin:${RL_PASS_KARAMOVA}@127.0.0.1:41000/rtsp/streaming?channel=7&subtype=0
   karamova_7_main:
-    - ffmpeg:karamova_7_main_src#video=h264#hardware=videotoolbox
+    - karamova_7_main_src
+    - ffmpeg:karamova_7_main_src#video=h264#raw=-preset ultrafast -tune zerolatency
   kirtbaya_2_sub_src:
     - rtsp://admin:${RL_PASS_KIRTBAYA}@127.0.0.1:41001/rtsp/streaming?channel=2&subtype=1
   kirtbaya_2_sub:
-    - ffmpeg:kirtbaya_2_sub_src#video=h264#hardware=videotoolbox
+    - kirtbaya_2_sub_src
+    - ffmpeg:kirtbaya_2_sub_src#video=h264#raw=-preset ultrafast -tune zerolatency
   kirtbaya_2_src:
     - rtsp://admin:${RL_PASS_KIRTBAYA}@127.0.0.1:41001/rtsp/streaming?channel=2&subtype=2
   kirtbaya_2:
-    - ffmpeg:kirtbaya_2_src#video=h264#hardware=videotoolbox
+    - kirtbaya_2_src
+    - ffmpeg:kirtbaya_2_src#video=h264#raw=-preset ultrafast -tune zerolatency
   kirtbaya_2_main_src:
     - rtsp://admin:${RL_PASS_KIRTBAYA}@127.0.0.1:41001/rtsp/streaming?channel=2&subtype=0
   kirtbaya_2_main:
-    - ffmpeg:kirtbaya_2_main_src#video=h264#hardware=videotoolbox
+    - kirtbaya_2_main_src
+    - ffmpeg:kirtbaya_2_main_src#video=h264#raw=-preset ultrafast -tune zerolatency
   kirtbaya_3_sub_src:
     - rtsp://admin:${RL_PASS_KIRTBAYA}@127.0.0.1:41001/rtsp/streaming?channel=3&subtype=1
   kirtbaya_3_sub:
-    - ffmpeg:kirtbaya_3_sub_src#video=h264#hardware=videotoolbox
+    - kirtbaya_3_sub_src
+    - ffmpeg:kirtbaya_3_sub_src#video=h264#raw=-preset ultrafast -tune zerolatency
   kirtbaya_3_src:
     - rtsp://admin:${RL_PASS_KIRTBAYA}@127.0.0.1:41001/rtsp/streaming?channel=3&subtype=2
   kirtbaya_3:
-    - ffmpeg:kirtbaya_3_src#video=h264#hardware=videotoolbox
+    - kirtbaya_3_src
+    - ffmpeg:kirtbaya_3_src#video=h264#raw=-preset ultrafast -tune zerolatency
   kirtbaya_3_main_src:
     - rtsp://admin:${RL_PASS_KIRTBAYA}@127.0.0.1:41001/rtsp/streaming?channel=3&subtype=0
   kirtbaya_3_main:
-    - ffmpeg:kirtbaya_3_main_src#video=h264#hardware=videotoolbox
+    - kirtbaya_3_main_src
+    - ffmpeg:kirtbaya_3_main_src#video=h264#raw=-preset ultrafast -tune zerolatency
   lenina_4_src:
     - rtsp://admin:${RL_PASS_LENINA}@127.0.0.1:41002/ch04/1
   lenina_4:
-    - ffmpeg:lenina_4_src#video=h264#hardware=videotoolbox
-  lenina_4_mobile_src:
-    - rtsp://admin:${RL_PASS_LENINA}@127.0.0.1:41002/ch04/2
-  lenina_4_mobile:
-    - ffmpeg:lenina_4_mobile_src#video=h264#hardware=videotoolbox
+    - lenina_4_src
   lenina_4_main_src:
     - rtsp://admin:${RL_PASS_LENINA}@127.0.0.1:41002/ch04/0
   lenina_4_main:
-    - ffmpeg:lenina_4_main_src#video=h264#hardware=videotoolbox
+    - lenina_4_main_src
   lenina_6_src:
     - rtsp://admin:${RL_PASS_LENINA}@127.0.0.1:41002/ch06/1
   lenina_6:
-    - ffmpeg:lenina_6_src#video=h264#hardware=videotoolbox
-  lenina_6_mobile_src:
-    - rtsp://admin:${RL_PASS_LENINA}@127.0.0.1:41002/ch06/2
-  lenina_6_mobile:
-    - ffmpeg:lenina_6_mobile_src#video=h264#hardware=videotoolbox
+    - lenina_6_src
+    - ffmpeg:lenina_6_src#video=h264#raw=-preset ultrafast -tune zerolatency
   lenina_6_main_src:
     - rtsp://admin:${RL_PASS_LENINA}@127.0.0.1:41002/ch06/0
   lenina_6_main:
-    - ffmpeg:lenina_6_main_src#video=h264#hardware=videotoolbox
-  ezviz_fridge_entry_src:
-    - http://127.0.0.1:8560/ezviz_fridge_entry.ts
+    - lenina_6_main_src
+    - ffmpeg:lenina_6_main_src#video=h264#raw=-preset ultrafast -tune zerolatency
   ezviz_fridge_entry:
-    - rtsp://127.0.0.1:8554/ezviz_fridge_entry_src?video
-  ezviz_general_src:
-    - http://127.0.0.1:8560/ezviz_general.ts
+    - http://127.0.0.1:8560/ezviz_fridge_entry.ts
   ezviz_general:
-    - rtsp://127.0.0.1:8554/ezviz_general_src?video
+    - http://127.0.0.1:8560/ezviz_general.ts
+preload:
+  karamova_5_src: ""
+  karamova_7_src: ""
+  kirtbaya_2_src: ""
+  kirtbaya_3_src: ""
+  lenina_4_src: ""
+  lenina_6_src: ""
+  ezviz_fridge_entry: ""
+  ezviz_general: ""

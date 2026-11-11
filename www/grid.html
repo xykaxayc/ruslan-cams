@@ -3,6 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0b0e14">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Камеры">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <title>Камеры наблюдения</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -316,7 +324,7 @@
     transform: scale(0.985);
   }
 
-  .cell iframe {
+  .cell iframe, .cell video-stream {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -343,7 +351,15 @@
     transition: opacity 0.2s ease;
   }
 
-  .cell:hover .cell-header {
+  
+  .cell:focus, .cell:focus-visible {
+    outline: 3px solid #3b82f6 !important;
+    box-shadow: 0 0 24px rgba(59, 130, 246, 0.75) !important;
+    transform: scale(1.02);
+    z-index: 10;
+  }
+
+  .cell:hover .cell-header, .cell:focus .cell-header {
     opacity: 1;
   }
 
@@ -691,7 +707,127 @@
       gap: 6px;
     }
   }
+
+  /* Safe-area insets for iPhone / iPad / Android notch */
+  body {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  .ios-install-banner {
+    display: none;
+    position: fixed;
+    bottom: max(16px, env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 480px;
+    background: rgba(18, 22, 31, 0.96);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(59, 130, 246, 0.4);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    border-radius: 14px;
+    padding: 12px 16px;
+    z-index: 9999;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    color: #f1f5f9;
+  }
+
+  .ios-install-banner.active {
+    display: flex;
+  }
+
+  .ios-install-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: #1e293b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .ios-install-icon img {
+    width: 28px;
+    height: 28px;
+  }
+
+  .ios-install-text {
+    flex: 1;
+    line-height: 1.4;
+  }
+
+  .ios-install-text strong {
+    color: #60a5fa;
+  }
+
+  .ios-install-close {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px;
+    line-height: 1;
+  }
 </style>
+<script type="module" src="./video-stream.js?v=25">
+// --- PWA Service Worker & Install Prompt Logic ---
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW error:', err));
+  });
+}
+
+let deferredPrompt = null;
+const pwaBtn = document.getElementById('btn-pwa-install');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (pwaBtn) pwaBtn.style.display = 'inline-flex';
+});
+
+if (pwaBtn) {
+  pwaBtn.addEventListener('click', async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      if (choice.outcome === 'accepted') {
+        pwaBtn.style.display = 'none';
+      }
+      deferredPrompt = null;
+    }
+  });
+}
+
+// iOS Safari detection & install banner
+const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+const bannerDismissed = localStorage.getItem('ios_pwa_banner_dismissed');
+
+if (isIos && !isStandalone && !bannerDismissed) {
+  setTimeout(() => {
+    const banner = document.getElementById('ios-banner');
+    if (banner) banner.classList.add('active');
+  }, 2000);
+}
+
+const closeIosBtn = document.getElementById('close-ios-banner');
+if (closeIosBtn) {
+  closeIosBtn.addEventListener('click', () => {
+    const banner = document.getElementById('ios-banner');
+    if (banner) banner.classList.remove('active');
+    localStorage.setItem('ios_pwa_banner_dismissed', 'true');
+  });
+}
+
+</script>
 </head>
 <body>
 
@@ -711,6 +847,14 @@
       <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
       <span class="btn-text">Добавить</span>
     </button>
+    <button id="btn-pwa-install" class="btn" style="display:none;" title="Установить приложение на телефон/планшет">
+      <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+      <span class="btn-text">Установить PWA</span>
+    </button>
+    <a href="/ruslan-tv.apk download class="btn" style="text-decoration:none; color:inherit;" title="Скачать приложение для Android TV">
+      <svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 1.99-.9 1.99-2L23 5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg>
+      <span class="btn-text">ТВ App (.apk)</span>
+    </a>
     <button id="btn-edit-order" class="btn" title="Настроить порядок и состав камер">
       <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
       <span class="btn-text">Распорядок</span>
@@ -720,11 +864,10 @@
       <span>Буфер:</span>
       <div class="custom-select">
         <select id="buffer" aria-label="Буфер воспроизведения">
-          <option value="1">1 сек</option>
+          <option value="0.5">0.5 сек (быстрый)</option>
+          <option value="1" selected>1 сек (рек.)</option>
           <option value="2">2 сек</option>
-          <option value="4">4 сек (рек.)</option>
-          <option value="6">6 сек</option>
-          <option value="10">10 сек</option>
+          <option value="4">4 сек (ТВ)</option>
         </select>
       </div>
     </div>
@@ -803,6 +946,13 @@ const preferences = {
   set(key, value) { try { localStorage.setItem(key, value); } catch (_) {} }
 };
 
+// Migrate old localStorage values
+try {
+  if (preferences.get('cam-buffer') === '4') preferences.set('cam-buffer', '1');
+  if (preferences.get('cam-stream:lenina_6') === 'mobile') preferences.set('cam-stream:lenina_6', 'sub');
+  if (preferences.get('cam-stream:lenina_4') === 'mobile') preferences.set('cam-stream:lenina_4', 'sub');
+} catch (_) {}
+
 let currentCfg = null;
 let currentCams = [];
 let isEditMode = false;
@@ -848,8 +998,8 @@ if (fullScreenBtn) {
 
 // Buffer selector
 const selector = document.getElementById('buffer');
-const savedBuffer = preferences.get('cam-buffer') || '4';
-selector.value = ['1','2','4','6','10'].includes(savedBuffer) ? savedBuffer : '4';
+const savedBuffer = preferences.get('cam-buffer') || '1';
+selector.value = ['0.5','1','2','4','6','10'].includes(savedBuffer) ? savedBuffer : '1';
 selector.addEventListener('change', () => {
   preferences.set('cam-buffer', selector.value);
   location.reload();
@@ -978,7 +1128,7 @@ if (window.ResizeObserver) new ResizeObserver(scheduleLayout).observe(grid);
 window.addEventListener('resize', scheduleLayout);
 if (window.visualViewport) window.visualViewport.addEventListener('resize', scheduleLayout);
 
-const player = (id) => `${location.origin}/player.html?src=${encodeURIComponent(id)}&go2rtc=${currentCfg.go2rtc}&buffer=${selector.value}&v=8`;
+const player = (id) => `${location.origin}/player.html?src=${encodeURIComponent(id)}&go2rtc=${currentCfg.go2rtc}&buffer=${selector.value}&v=10`;
 const labels = {
   sub: 'Sub (быстрый)',
   mobile: 'Mobile',
@@ -999,15 +1149,29 @@ function renderGrid() {
 
     const cell = document.createElement('div');
     cell.className = 'cell';
+    cell.setAttribute('tabindex', '0');
+    cell.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        zoomBtn.click();
+        e.preventDefault();
+      }
+    });
     cell.dataset.index = index;
     cell.dataset.id = c.id;
     cell.setAttribute('draggable', 'false');
 
-    // Video frame
-    const iframe = document.createElement('iframe');
-    iframe.allow = 'autoplay; fullscreen';
-    iframe.title = c.title;
-    iframe.src = player(streams[selected]);
+    // Native video-stream player in DOM (no iframes, minimal RAM)
+    const playerElem = document.createElement('video-stream');
+    playerElem.background = true;
+    playerElem.bufferSeconds = parseFloat(selector.value);
+    const isLocal = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
+    const wsHost = isLocal ? (location.hostname + ':' + currentCfg.go2rtc) : location.host;
+    const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const urlParams = new URLSearchParams(window.location.search);
+    const isTv = /android/i.test(navigator.userAgent) && (/tv|smart|crkey|googletv/i.test(navigator.userAgent) || screen.width >= 1280) || location.search.includes('tv');
+    const tokenParam = "&token=" + encodeURIComponent(urlParams.get('token') || 'ruslan2026');
+    playerElem.mode = isTv ? 'mjpeg' : 'webrtc,mse';
+    playerElem.src = `${wsProto}//${wsHost}/api/ws?src=${encodeURIComponent(streams[selected])}${tokenParam}`;
 
     // Top Header Bar
     const header = document.createElement('div');
@@ -1071,7 +1235,7 @@ function renderGrid() {
       select.addEventListener('change', () => {
         const kind = select.value;
         preferences.set(storageKey, kind);
-        iframe.src = player(streams[kind]);
+        playerElem.src = `${wsProto}//${wsHost}/api/ws?src=${encodeURIComponent(streams[kind])}${tokenParam}`;
       });
       actions.append(select);
     }
@@ -1089,16 +1253,41 @@ function renderGrid() {
         cell.classList.add('fullscreen-mode');
         zoomBtn.setAttribute('title', 'Свернуть камеру');
         zoomBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-14v3h3v2h-5V5h-2z"/></svg>';
+        playerElem.mode = webrtc,mse;
+        // Seamlessly switch to HD Main stream when maximized
+        if (streams.main) {
+          playerElem.src = `${wsProto}//${wsHost}/api/ws?src=${encodeURIComponent(streams.main)}${tokenParam}`;
+        }
       } else {
         cell.classList.remove('fullscreen-mode');
         zoomBtn.setAttribute('title', 'Развернуть камеру');
         zoomBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>';
+        playerElem.mode = isTv ? 'mjpeg' : 'webrtc,mse';
+        // Revert to selected grid stream (Sub / Mobile)
+        const currentKind = (select ? select.value : selected);
+        playerElem.src = `${wsProto}//${wsHost}/api/ws?src=${encodeURIComponent(streams[currentKind])}${tokenParam}`;
       }
+    });
+
+    // Double-tap or double-click to toggle fullscreen
+    let lastCellTap = 0;
+    cell.addEventListener('touchend', (e) => {
+      if (e.target.closest('.cell-header')) return;
+      const now = Date.now();
+      if (now - lastCellTap < 320 && now - lastCellTap > 0) {
+        zoomBtn.click();
+        e.preventDefault();
+      }
+      lastCellTap = now;
+    });
+    cell.addEventListener('dblclick', (e) => {
+      if (e.target.closest('.cell-header')) return;
+      zoomBtn.click();
     });
 
     actions.append(dragHandle, removeBtn, zoomBtn);
     header.append(titleBadge, actions);
-    cell.append(iframe, header);
+    cell.append(playerElem, header);
 
     // Drag and Drop Events
     cell.addEventListener('dragstart', (e) => {
@@ -1183,5 +1372,16 @@ fetch('grid.json?' + Date.now()).then(r => {
     </div>`;
 });
 </script>
+
+<div id="ios-banner" class="ios-install-banner">
+  <div class="ios-install-icon">
+    <img src="/icon-192.png" alt="App">
+  </div>
+  <div class="ios-install-text">
+    Установить на iPhone/iPad:<br>Нажмите <strong>«Поделиться» ⎋</strong> и выберите <strong>«На экран “Домой” ⊞»</strong>
+  </div>
+  <button id="close-ios-banner" class="ios-install-close" aria-label="Закрыть">✕</button>
+</div>
+
 </body>
 </html>

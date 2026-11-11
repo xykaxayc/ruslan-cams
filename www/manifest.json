@@ -1,25 +1,38 @@
 {
-  "name": "Камеры наблюдения",
+  "name": "Видеонаблюдение Ruslan Cams",
   "short_name": "Камеры",
-  "description": "Автономная система видеонаблюдения Руслана",
+  "description": "Система видеонаблюдения 8 камер в реальном времени",
   "start_url": "/grid.html?token=ruslan2026",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#0a0c10",
-  "theme_color": "#0a0c10",
+  "background_color": "#0b0e14",
+  "theme_color": "#0b0e14",
+  "categories": ["utilities", "security"],
   "icons": [
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
