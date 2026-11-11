@@ -20,6 +20,8 @@ ezviz/private/
 bin/go2rtc
 p2p/RSP2PServer
 p2p/bindif.dylib
+p2p/*.dll
+p2p/*.exe
 check/*.png
 check/*.jpg
 mosaics/
