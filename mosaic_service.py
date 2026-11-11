@@ -84,16 +84,28 @@ def build_ffmpeg_cmd(active_streams):
 
         if cam_id in active_streams:
             rtsp_key = active_streams[cam_id]
-            # Live RTSP stream from go2rtc
-            inputs.extend([
-                "-rtsp_transport", "tcp",
-                "-timeout", "5000000",
-                "-i", f"rtsp://127.0.0.1:8554/{rtsp_key}"
-            ])
+            if cam_id.startswith("ezviz_"):
+                inputs.extend([
+                    "-reconnect", "1",
+                    "-reconnect_at_eof", "1",
+                    "-reconnect_streamed", "1",
+                    "-reconnect_delay_max", "2",
+                    "-fflags", "+genpts+discardcorrupt",
+                    "-err_detect", "ignore_err",
+                    "-i", f"http://127.0.0.1:8560/{cam_id}.ts"
+                ])
+            else:
+                inputs.extend([
+                    "-rtsp_transport", "tcp",
+                    "-timeout", "5000000",
+                    "-fflags", "+genpts+discardcorrupt",
+                    "-err_detect", "ignore_err",
+                    "-i", f"rtsp://127.0.0.1:8554/{rtsp_key}"
+                ])
             # Scale each tile to 480x540 (half height of 1080p for 2 rows)
             filter_inputs.append(
                 f"[{i}:v]scale=480:540:force_original_aspect_ratio=decrease,"
-                f"pad=480:540:(ow-iw)/2:(oh-ih)/2:color=0x18181b,fps=12,setpts=PTS-STARTPTS[v{i}]"
+                f"pad=480:540:(ow-iw)/2:(oh-ih)/2:color=0x18181b,fps=12,settb=AVTB,setpts=N/(12*TB)[v{i}]"
             )
         else:
             # Fallback to offline placeholder
@@ -104,7 +116,7 @@ def build_ffmpeg_cmd(active_streams):
             ])
             filter_inputs.append(
                 f"[{i}:v]scale=480:540:force_original_aspect_ratio=decrease,"
-                f"pad=480:540:(ow-iw)/2:(oh-ih)/2:color=0x18181b,fps=12,setpts=PTS-STARTPTS[v{i}]"
+                f"pad=480:540:(ow-iw)/2:(oh-ih)/2:color=0x18181b,fps=12,settb=AVTB,setpts=N/(12*TB)[v{i}]"
             )
 
     # Grid layout: 4 columns x 2 rows = 1920x1080
@@ -133,14 +145,11 @@ def build_ffmpeg_cmd(active_streams):
 
 def register_mosaic_stream():
     try:
-        req = urllib.request.Request(
-            f"{GO2RTC_API}/api/streams?name=mosaic_all&src=rtsp://127.0.0.1:8554/mosaic_all",
-            method="PUT"
-        )
-        urllib.request.urlopen(req, timeout=3)
-        log.info("Registered mosaic_all stream in go2rtc")
+        req = urllib.request.Request(f"{GO2RTC_API}/api/streams?name=mosaic_all&src=", method="PUT")
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            log.info("Registered mosaic_all stream in go2rtc")
     except Exception as e:
-        log.warning(f"go2rtc registration error: {e}")
+        log.warning(f"Failed to register mosaic_all stream in go2rtc: {e}")
 
 def main():
     log.info("Starting Fault-Tolerant Mosaic Generator")
@@ -174,6 +183,7 @@ def main():
                     except Exception:
                         proc.kill()
 
+                register_mosaic_stream()
                 cmd = build_ffmpeg_cmd(active)
                 log.info(f"Launching ffmpeg mosaic (Active cams: {list(active.keys())})...")
                 proc = subprocess.Popen(cmd)

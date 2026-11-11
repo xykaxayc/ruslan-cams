@@ -87,16 +87,20 @@ class CamPlayerManager(private val context: Context) {
 
             override fun onPlayerError(error: PlaybackException) {
                 listener?.onError(error.localizedMessage ?: "Переподключение...")
-                // Auto-reconnect isolated to this tile only!
+                // Auto-reconnect isolated to this tile with fresh source!
                 reconnectRunnable?.let { mainHandler.removeCallbacks(it) }
                 reconnectRunnable = Runnable {
                     try {
-                        player.setMediaSource(mediaSource)
+                        val freshSource = RtspMediaSource.Factory()
+                            .setForceUseRtpTcp(true)
+                            .setTimeoutMs(5000)
+                            .createMediaSource(MediaItem.fromUri(streamUrl))
+                        player.setMediaSource(freshSource)
                         player.prepare()
                         player.playWhenReady = true
                     } catch (_: Exception) {}
                 }
-                mainHandler.postDelayed(reconnectRunnable!!, 3000)
+                mainHandler.postDelayed(reconnectRunnable!!, 2000)
             }
         })
 

@@ -436,6 +436,9 @@ def publish_streams(dev_streams):
         stream_dev[sid] = "ezviz"
         grid.append({"id": sid, "title": cam["title"], "default": "default", "streams": {"default": sid}})
 
+    # Резервируем поток для внешней публикации мозаики
+    streams["mosaic_all"] = ""
+
     lines = [
         "api:",
         f'  listen: "127.0.0.1:{G2R_PORT}"',
@@ -451,11 +454,14 @@ def publish_streams(dev_streams):
         "streams:" if streams else "streams: {}"
     ]
     for sid, val in streams.items():
-        lines.append(f"  {sid}:")
-        if isinstance(val, list):
+        if val == "" or val is None:
+            lines.append(f'  {sid}: ""')
+        elif isinstance(val, list):
+            lines.append(f"  {sid}:")
             for item in val:
                 lines.append(f"    - {item}")
         else:
+            lines.append(f"  {sid}:")
             lines.append(f"    - {val}")
 
     preload_sids = []
