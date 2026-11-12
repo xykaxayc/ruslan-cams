@@ -952,10 +952,13 @@ if (closeIosBtn) {
         <label class="form-label" for="tv-buffer-select">Буфер воспроизведения на ТВ</label>
         <select id="tv-buffer-select" class="form-select">
           <option value="1000">1000 мс (1 сек — мин. задержка)</option>
+          <option value="1500">1500 мс (1.5 сек)</option>
           <option value="2000">2000 мс (2 сек — стабильно)</option>
-          <option value="2500" selected>2500 мс (2.5 сек — рекомендуемый для Wi-Fi)</option>
-          <option value="4000">4000 мс (4 сек — макс. надежность)</option>
-          <option value="6000">6000 мс (6 сек — медленный интернет)</option>
+          <option value="2500" selected>2500 мс (2.5 сек — баланс)</option>
+          <option value="3000">3000 мс (3 сек — рекомендуемый для Wi-Fi)</option>
+          <option value="4000">4000 мс (4 сек — повышенная надежность)</option>
+          <option value="5000">5000 мс (5 сек)</option>
+          <option value="6000">6000 мс (6 сек — слабый Wi-Fi)</option>
         </select>
         <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">
           Увеличенный буфер исключает микрозависания и перезагрузку потоков при нестабильном Wi-Fi сигнале.
@@ -1005,7 +1008,6 @@ const preferences = {
 
 // Migrate old localStorage values
 try {
-  if (preferences.get('cam-buffer') === '4') preferences.set('cam-buffer', '1');
   if (preferences.get('cam-stream:lenina_6') === 'mobile') preferences.set('cam-stream:lenina_6', 'sub');
   if (preferences.get('cam-stream:lenina_4') === 'mobile') preferences.set('cam-stream:lenina_4', 'sub');
 } catch (_) {}
@@ -1056,7 +1058,10 @@ async function saveTvSettings(tvSettings) {
       })
     });
     if (res.ok) {
-      if (currentCfg) currentCfg.tv_settings = tvSettings;
+      if (currentCfg) {
+        currentCfg.tv_settings = tvSettings;
+        lastSignature = JSON.stringify(currentCfg);
+      }
       showToast('Настройки ТВ сохранены и применятся на телевизоре');
     } else {
       showToast('Ошибка сохранения настроек');
@@ -1079,14 +1084,19 @@ if (fullScreenBtn) {
   });
 }
 
-// Buffer selector
+// Buffer selector for browser
 const selector = document.getElementById('buffer');
 const savedBuffer = preferences.get('cam-buffer') || '1';
-selector.value = ['0.5','1','2','4','6','10'].includes(savedBuffer) ? savedBuffer : '1';
-selector.addEventListener('change', () => {
-  preferences.set('cam-buffer', selector.value);
-  location.reload();
-});
+if (selector) {
+  selector.value = ['0.5','1','2','4','6','10'].includes(savedBuffer) ? savedBuffer : '1';
+  selector.addEventListener('change', () => {
+    preferences.set('cam-buffer', selector.value);
+    document.querySelectorAll('video-rtc').forEach(el => {
+      el.bufferSeconds = parseFloat(selector.value);
+    });
+    showToast(`Буфер в браузере: ${selector.value} сек`);
+  });
+}
 
 // Edit Mode
 const editBtn = document.getElementById('btn-edit-order');
@@ -1123,7 +1133,24 @@ if (tvSettingsBtn && tvSettingsModal) {
   tvSettingsBtn.addEventListener('click', () => {
     const tv = currentCfg?.tv_settings || {};
     const buf = String(tv.buffer_ms || 2500);
-    if (tvBufferSelect) tvBufferSelect.value = buf;
+    if (tvBufferSelect) {
+      let matched = false;
+      for (let opt of tvBufferSelect.options) {
+        if (opt.value === buf) {
+          tvBufferSelect.value = buf;
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) {
+        const opt = document.createElement('option');
+        opt.value = buf;
+        opt.textContent = `${buf} мс`;
+        opt.selected = true;
+        tvBufferSelect.appendChild(opt);
+        tvBufferSelect.value = buf;
+      }
+    }
     if (tvClockCheckbox) tvClockCheckbox.checked = tv.clock_enabled !== false;
     tvSettingsModal.classList.add('open');
   });
