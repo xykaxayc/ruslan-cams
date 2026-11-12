@@ -84,17 +84,17 @@ def build_ffmpeg_cmd(active_streams):
             inputs.extend([
                 "-rtsp_transport", "tcp",
                 "-timeout", "5000000",
-                "-thread_queue_size", "1024",
-                "-probesize", "10000000",
-                "-analyzeduration", "10000000",
+                "-thread_queue_size", "512",
+                "-probesize", "1000000",
+                "-analyzeduration", "1000000",
                 "-fflags", "+genpts+discardcorrupt",
                 "-err_detect", "ignore_err",
                 "-i", f"rtsp://127.0.0.1:8554/{rtsp_key}"
             ])
-            # Scale each tile to 480x540 (half height of 1080p for 2 rows)
+            # Scale each tile to 320x360 (4 cols x 320 = 1280, 2 rows x 360 = 720)
             filter_inputs.append(
-                f"[{i}:v]scale=480:540:force_original_aspect_ratio=decrease,"
-                f"pad=480:540:(ow-iw)/2:(oh-ih)/2:color=0x18181b,fps=15,settb=AVTB,setpts=N/(15*TB)[v{i}]"
+                f"[{i}:v]scale=320:360:force_original_aspect_ratio=decrease,"
+                f"pad=320:360:(ow-iw)/2:(oh-ih)/2:color=0x18181b,fps=15,settb=AVTB,setpts=N/(15*TB)[v{i}]"
             )
         else:
             # Fallback to offline placeholder
@@ -104,11 +104,11 @@ def build_ffmpeg_cmd(active_streams):
                 "-i", placeholder
             ])
             filter_inputs.append(
-                f"[{i}:v]scale=480:540:force_original_aspect_ratio=decrease,"
-                f"pad=480:540:(ow-iw)/2:(oh-ih)/2:color=0x18181b,fps=15,settb=AVTB,setpts=N/(15*TB)[v{i}]"
+                f"[{i}:v]scale=320:360:force_original_aspect_ratio=decrease,"
+                f"pad=320:360:(ow-iw)/2:(oh-ih)/2:color=0x18181b,fps=15,settb=AVTB,setpts=N/(15*TB)[v{i}]"
             )
 
-    # Grid layout: 4 columns x 2 rows = 1920x1080
+    # Grid layout: 4 columns x 2 rows = 1280x720
     layout = "0_0|w0_0|w0+w1_0|w0+w1+w2_0|0_h0|w4_h0|w4+w5_h0|w4+w5+w6_h0"
     v_tags = "".join([f"[v{i}]" for i in range(8)])
     filter_graph = ";".join(filter_inputs) + f";{v_tags}xstack=inputs=8:layout={layout}[outv]"
@@ -119,12 +119,12 @@ def build_ffmpeg_cmd(active_streams):
         "-filter_complex", filter_graph,
         "-map", "[outv]",
         "-c:v", "libx264",
-        "-threads", "2",
+        "-threads", "1",
         "-preset", "ultrafast",
         "-tune", "zerolatency",
-        "-b:v", "2000k",
-        "-maxrate", "2600k",
-        "-bufsize", "1500k",
+        "-b:v", "1100k",
+        "-maxrate", "1400k",
+        "-bufsize", "700k",
         "-pix_fmt", "yuv420p",
         "-g", "30",
         "-f", "rtsp",

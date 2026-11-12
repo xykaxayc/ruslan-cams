@@ -83,9 +83,9 @@ streams:
     - lenina_6_main_src
     - ffmpeg:lenina_6_main_src#video=h264#raw=-preset ultrafast -tune zerolatency -b:v 600k -maxrate 800k -bufsize 1200k
   ezviz_fridge_entry:
-    - http://127.0.0.1:8560/ezviz_fridge_entry.ts
+    - ffmpeg:http://127.0.0.1:8560/ezviz_fridge_entry.ts#video=h264#raw=-threads 1 -preset ultrafast -tune zerolatency -b:v 450k -maxrate 600k -bufsize 800k
   ezviz_general:
-    - http://127.0.0.1:8560/ezviz_general.ts
+    - ffmpeg:http://127.0.0.1:8560/ezviz_general.ts#video=h264#raw=-threads 1 -preset ultrafast -tune zerolatency -b:v 450k -maxrate 600k -bufsize 800k
   mosaic_all: []
 preload:
   karamova_5_src: ""
