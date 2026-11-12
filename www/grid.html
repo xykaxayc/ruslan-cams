@@ -8,10 +8,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Камеры">
+<meta name="apple-mobile-web-app-title" content="Монобукет">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
-<title>Камеры наблюдения</title>
+<title>Монобукет · Камеры</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -851,10 +851,14 @@ if (closeIosBtn) {
       <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
       <span class="btn-text">Установить PWA</span>
     </button>
-    <a href="/ruslan-tv.apk download class="btn" style="text-decoration:none; color:inherit;" title="Скачать приложение для Android TV">
+    <a href="/monobuket-tv.apk" download class="btn" style="text-decoration:none; color:inherit;" title="Скачать приложение для Android TV">
       <svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 1.99-.9 1.99-2L23 5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg>
       <span class="btn-text">ТВ App (.apk)</span>
     </a>
+    <button id="btn-tv-settings" class="btn" title="Настройки приложения на Android TV">
+      <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      <span class="btn-text">Настройки ТВ</span>
+    </button>
     <button id="btn-edit-order" class="btn" title="Настроить порядок и состав камер">
       <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
       <span class="btn-text">Распорядок</span>
@@ -934,6 +938,59 @@ if (closeIosBtn) {
   </div>
 </div>
 
+<!-- Modal: TV Settings -->
+<div id="modal-tv-settings" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Настройки Android TV</h3>
+      <button class="btn btn-icon btn-close-modal" aria-label="Закрыть">
+        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label" for="tv-buffer-select">Буфер воспроизведения на ТВ</label>
+        <select id="tv-buffer-select" class="form-select">
+          <option value="1000">1000 мс (1 сек — мин. задержка)</option>
+          <option value="2000">2000 мс (2 сек — стабильно)</option>
+          <option value="2500" selected>2500 мс (2.5 сек — рекомендуемый для Wi-Fi)</option>
+          <option value="4000">4000 мс (4 сек — макс. надежность)</option>
+          <option value="6000">6000 мс (6 сек — медленный интернет)</option>
+        </select>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">
+          Увеличенный буфер исключает микрозависания и перезагрузку потоков при нестабильном Wi-Fi сигнале.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Интерфейс на экране ТВ</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;user-select:none;padding:6px 0;">
+          <input type="checkbox" id="tv-clock-checkbox" checked style="width:16px;height:16px;accent-color:var(--accent);">
+          <span>Показывать часы и дату в правом верхнем углу</span>
+        </label>
+      </div>
+
+      <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);padding:12px;display:flex;flex-direction:column;gap:6px;font-size:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="color:var(--text-secondary);">Приложение ТВ:</span>
+          <span style="font-weight:600;color:var(--accent);">v1.0.6 (build 7)</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="color:var(--text-secondary);">Установщик (.apk):</span>
+          <a href="/monobuket-tv.apk" download style="color:#60a5fa;text-decoration:none;font-weight:500;">Скачать monobuket-tv.apk</a>
+        </div>
+        <div style="color:var(--text-muted);font-size:11px;margin-top:4px;line-height:1.4;">
+          Телевизор опрашивает настройки автоматически каждые 30 секунд. Изменения применятся на ТВ без перезапуска приложения.
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-close-modal">Отмена</button>
+      <button id="btn-save-tv-settings" class="btn btn-primary">Применить настройки на ТВ</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div id="toast" class="toast">
   <span class="toast-dot"></span>
@@ -974,13 +1031,39 @@ async function syncToServer() {
     const res = await fetch('/api/save-grid', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cams: currentCams })
+      body: JSON.stringify({
+        cams: currentCams,
+        tv_settings: currentCfg?.tv_settings
+      })
     });
     if (res.ok) {
       showToast('Синхронизировано со всеми устройствами');
     }
   } catch (err) {
     console.warn('Sync failed:', err);
+  }
+}
+
+async function saveTvSettings(tvSettings) {
+  ignoreNextReload = true;
+  try {
+    const res = await fetch('/api/save-grid', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cams: currentCams,
+        tv_settings: tvSettings
+      })
+    });
+    if (res.ok) {
+      if (currentCfg) currentCfg.tv_settings = tvSettings;
+      showToast('Настройки ТВ сохранены и применятся на телевизоре');
+    } else {
+      showToast('Ошибка сохранения настроек');
+    }
+  } catch (err) {
+    console.warn('Sync failed:', err);
+    showToast('Ошибка сети при сохранении');
   }
 }
 
@@ -1018,21 +1101,53 @@ editBtn.addEventListener('click', () => {
   }
 });
 
-// Modal
+// Modals
 const addBtn = document.getElementById('btn-add-camera');
 const addModal = document.getElementById('modal-add');
+const tvSettingsBtn = document.getElementById('btn-tv-settings');
+const tvSettingsModal = document.getElementById('modal-tv-settings');
+const tvBufferSelect = document.getElementById('tv-buffer-select');
+const tvClockCheckbox = document.getElementById('tv-clock-checkbox');
 const addDevice = document.getElementById('add-device');
 const nvrFields = document.getElementById('nvr-fields');
 const customFields = document.getElementById('custom-stream-fields');
 const closeButtons = document.querySelectorAll('.btn-close-modal');
 
-addBtn.addEventListener('click', () => {
-  addModal.classList.add('open');
-});
+if (addBtn && addModal) {
+  addBtn.addEventListener('click', () => {
+    addModal.classList.add('open');
+  });
+}
+
+if (tvSettingsBtn && tvSettingsModal) {
+  tvSettingsBtn.addEventListener('click', () => {
+    const tv = currentCfg?.tv_settings || {};
+    const buf = String(tv.buffer_ms || 2500);
+    if (tvBufferSelect) tvBufferSelect.value = buf;
+    if (tvClockCheckbox) tvClockCheckbox.checked = tv.clock_enabled !== false;
+    tvSettingsModal.classList.add('open');
+  });
+}
+
+const btnSaveTv = document.getElementById('btn-save-tv-settings');
+if (btnSaveTv) {
+  btnSaveTv.addEventListener('click', () => {
+    const buffer_ms = parseInt(tvBufferSelect.value, 10) || 2500;
+    const clock_enabled = tvClockCheckbox.checked;
+    saveTvSettings({ buffer_ms, clock_enabled });
+    tvSettingsModal.classList.remove('open');
+  });
+}
 
 closeButtons.forEach(btn => {
   btn.addEventListener('click', () => {
-    addModal.classList.remove('open');
+    btn.closest('.modal-overlay')?.classList.remove('open');
+  });
+});
+
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.classList.remove('open');
   });
 });
 

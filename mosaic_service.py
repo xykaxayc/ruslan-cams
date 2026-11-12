@@ -59,16 +59,10 @@ def get_active_go2rtc_streams():
             for cam in CAMERAS:
                 cid = cam["id"]
                 key = get_stream_key(data, cid)
-                if key:
+                if key and key in data:
                     info = data.get(key)
                     if info and info.get("producers"):
-                        has_bytes = any(
-                            r.get("bytes", 0) > 0
-                            for p in (info.get("producers") or [])
-                            for r in (p.get("receivers") or [])
-                        )
-                        if has_bytes:
-                            active[cid] = key
+                        active[cid] = key
             return active
     except Exception as e:
         log.warning(f"Failed to query go2rtc: {e}")
@@ -84,24 +78,16 @@ def build_ffmpeg_cmd(active_streams):
 
         if cam_id in active_streams:
             rtsp_key = active_streams[cam_id]
-            if cam_id.startswith("ezviz_"):
-                inputs.extend([
-                    "-reconnect", "1",
-                    "-reconnect_at_eof", "1",
-                    "-reconnect_streamed", "1",
-                    "-reconnect_delay_max", "2",
-                    "-fflags", "+genpts+discardcorrupt",
-                    "-err_detect", "ignore_err",
-                    "-i", f"http://127.0.0.1:8560/{cam_id}.ts"
-                ])
-            else:
-                inputs.extend([
-                    "-rtsp_transport", "tcp",
-                    "-timeout", "5000000",
-                    "-fflags", "+genpts+discardcorrupt",
-                    "-err_detect", "ignore_err",
-                    "-i", f"rtsp://127.0.0.1:8554/{rtsp_key}"
-                ])
+            inputs.extend([
+                "-rtsp_transport", "tcp",
+                "-timeout", "5000000",
+                "-thread_queue_size", "512",
+                "-probesize", "10000000",
+                "-analyzeduration", "10000000",
+                "-fflags", "+genpts+discardcorrupt",
+                "-err_detect", "ignore_err",
+                "-i", f"rtsp://127.0.0.1:8554/{rtsp_key}"
+            ])
             # Scale each tile to 480x540 (half height of 1080p for 2 rows)
             filter_inputs.append(
                 f"[{i}:v]scale=480:540:force_original_aspect_ratio=decrease,"
@@ -144,19 +130,28 @@ def build_ffmpeg_cmd(active_streams):
     return cmd
 
 def register_mosaic_stream():
+    """Ensure mosaic_all endpoint is present in go2rtc without overriding it with empty src."""
     try:
-        req = urllib.request.Request(f"{GO2RTC_API}/api/streams?name=mosaic_all&src=", method="PUT")
+        req = urllib.request.Request(f"{GO2RTC_API}/api/streams")
         with urllib.request.urlopen(req, timeout=3) as resp:
-            log.info("Registered mosaic_all stream in go2rtc")
+            data = json.load(resp)
+            if "mosaic_all" in data:
+                return  # already configured properly in go2rtc.yaml
+        # If somehow missing, create empty stream container
+        req = urllib.request.Request(f"{GO2RTC_API}/api/streams?name=mosaic_all", method="PUT")
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            log.info("Registered mosaic_all stream container in go2rtc")
     except Exception as e:
-        log.warning(f"Failed to register mosaic_all stream in go2rtc: {e}")
+        log.warning(f"Failed to check/register mosaic_all stream in go2rtc: {e}")
 
 def main():
     log.info("Starting Fault-Tolerant Mosaic Generator")
     register_mosaic_stream()
 
     proc = None
-    last_active = None
+    stable_active = None
+    candidate_active = None
+    candidate_since = 0
 
     def cleanup(*_):
         nonlocal proc
@@ -174,20 +169,35 @@ def main():
     while True:
         try:
             active = get_active_go2rtc_streams()
-            if proc is None or proc.poll() is not None or (last_active is not None and active != last_active):
+            now = time.time()
+
+            should_restart = False
+            if proc is None or proc.poll() is not None:
+                should_restart = True
+                stable_active = active
+                candidate_active = None
+            elif active != stable_active:
+                if candidate_active != active:
+                    candidate_active = active
+                    candidate_since = now
+                elif now - candidate_since >= 30:
+                    log.info("Active cameras change confirmed stable for 30s, applying...")
+                    stable_active = active
+                    candidate_active = None
+                    should_restart = True
+
+            if should_restart:
                 if proc and proc.poll() is None:
-                    log.info("Active cameras changed, gracefully restarting ffmpeg...")
+                    log.info("Restarting ffmpeg mosaic...")
                     proc.terminate()
                     try:
                         proc.wait(timeout=2)
                     except Exception:
                         proc.kill()
 
-                register_mosaic_stream()
-                cmd = build_ffmpeg_cmd(active)
-                log.info(f"Launching ffmpeg mosaic (Active cams: {list(active.keys())})...")
+                cmd = build_ffmpeg_cmd(stable_active or active)
+                log.info(f"Launching ffmpeg mosaic (Active cams: {list((stable_active or active).keys())})...")
                 proc = subprocess.Popen(cmd)
-                last_active = active
 
             time.sleep(5)
         except Exception as e:

@@ -1,5 +1,6 @@
 package com.ruslancams.tv.ui
 
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,6 +18,13 @@ class CameraTileAdapter(
 ) : RecyclerView.Adapter<CameraTileAdapter.CameraViewHolder>() {
 
     private val players = mutableMapOf<Int, ExoPlayer>()
+    private var playerManager: CamPlayerManager? = null
+
+    private fun getOrCreatePlayerManager(context: Context): CamPlayerManager {
+        return playerManager ?: CamPlayerManager(context.applicationContext).also {
+            playerManager = it
+        }
+    }
 
     inner class CameraViewHolder(val binding: ItemCameraTileBinding) :
         RecyclerView.ViewHolder(binding.root) {
@@ -53,12 +61,12 @@ class CameraTileAdapter(
             releasePlayer(position)
 
             val streamUrl = camera.getStreamUrl(baseUrl = serverHost)
-            val playerManager = CamPlayerManager(binding.root.context)
+            val manager = getOrCreatePlayerManager(binding.root.context)
 
             binding.overlayLoading.visibility = View.VISIBLE
             binding.textLoadingStatus.text = binding.root.context.getString(R.string.status_connecting)
 
-            val player = playerManager.createPlayer(
+            val player = manager.createPlayer(
                 streamUrl = streamUrl,
                 isGridTile = true,
                 listener = object : CamPlayerManager.StreamStateListener {
@@ -119,23 +127,20 @@ class CameraTileAdapter(
     }
 
     private fun releasePlayer(position: Int) {
-        players.remove(position)?.let {
-            try {
-                it.stop()
-                it.clearMediaItems()
-                it.release()
-            } catch (_: Exception) {}
+        players.remove(position)?.let { player ->
+            playerManager?.releasePlayer(player) ?: run {
+                try {
+                    player.stop()
+                    player.clearMediaItems()
+                    player.release()
+                } catch (_: Exception) {}
+            }
         }
     }
 
     fun releaseAll() {
-        players.values.forEach {
-            try {
-                it.stop()
-                it.clearMediaItems()
-                it.release()
-            } catch (_: Exception) {}
-        }
         players.clear()
+        playerManager?.releaseAll()
+        playerManager = null
     }
 }

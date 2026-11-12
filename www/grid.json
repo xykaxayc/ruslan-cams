@@ -1,5 +1,9 @@
 {
  "go2rtc": 1984,
+ "tv_settings": {
+  "buffer_ms": 2500,
+  "clock_enabled": true
+ },
  "cams": [
   {
    "id": "karamova_5",
@@ -23,10 +27,9 @@
   {
    "id": "kirtbaya_2",
    "title": "Киртбая · Камера 2",
-   "default": "mobile",
+   "default": "sub",
    "streams": {
-    "sub": "kirtbaya_2_sub",
-    "mobile": "kirtbaya_2",
+    "sub": "kirtbaya_2",
     "main": "kirtbaya_2_main"
    }
   },

@@ -8,6 +8,7 @@
     <color name="accent_blue">#3B82F6</color>
     <color name="accent_blue_glow">#60A5FA</color>
     <color name="status_green">#10B981</color>
+    <color name="status_yellow">#F59E0B</color>
     <color name="status_red">#EF4444</color>
     <color name="focus_stroke">#3B82F6</color>
     <color name="normal_stroke">#1F2937</color>

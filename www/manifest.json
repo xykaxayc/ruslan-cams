@@ -1,7 +1,7 @@
 {
-  "name": "Видеонаблюдение Ruslan Cams",
-  "short_name": "Камеры",
-  "description": "Система видеонаблюдения 8 камер в реальном времени",
+  "name": "Монобукет — Видеонаблюдение",
+  "short_name": "Монобукет",
+  "description": "Система видеонаблюдения «Монобукет» в реальном времени",
   "start_url": "/grid.html?token=ruslan2026",
   "scope": "/",
   "display": "standalone",

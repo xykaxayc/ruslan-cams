@@ -235,16 +235,18 @@
         android:paddingVertical="5dp">
 
         <View
+            android:id="@+id/dotStatus"
             android:layout_width="8dp"
             android:layout_height="8dp"
             android:background="@drawable/dot_live" />
 
         <TextView
+            android:id="@+id/textPlaybackStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:text="8 КАМЕР ОНЛАЙН"
-            android:textColor="@color/status_green"
+            android:text="ПОДКЛЮЧЕНИЕ..."
+            android:textColor="@color/status_yellow"
             android:textSize="12sp"
             android:textStyle="bold" />
 
@@ -284,6 +286,7 @@
             android:paddingVertical="8dp">
 
             <View
+                android:id="@+id/dotFullscreenStatus"
                 android:layout_width="8dp"
                 android:layout_height="8dp"
                 android:background="@drawable/dot_live" />
@@ -298,6 +301,7 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/textFullscreenStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"

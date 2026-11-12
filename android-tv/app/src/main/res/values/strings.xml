@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Камеры Руслана</string>
+    <string name="app_name">Монобукет</string>
     <string name="status_live">В ЭФИРЕ</string>
     <string name="status_connecting">Подключение…</string>
     <string name="status_reconnecting">Восстановление…</string>

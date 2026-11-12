@@ -6,6 +6,7 @@ rtsp:
 webrtc:
   listen: ":8555"
   candidates:
+    - monobuket.tabcast.ru:8555
     - 66.151.34.27:8555
 log:
   level: info
@@ -41,7 +42,7 @@ streams:
     - kirtbaya_2_sub_src
     - ffmpeg:kirtbaya_2_sub_src#video=h264#raw=-preset ultrafast -tune zerolatency
   kirtbaya_2_src:
-    - rtsp://admin:${RL_PASS_KIRTBAYA}@127.0.0.1:41001/rtsp/streaming?channel=2&subtype=2
+    - rtsp://admin:${RL_PASS_KIRTBAYA}@127.0.0.1:41001/rtsp/streaming?channel=2&subtype=1
   kirtbaya_2:
     - kirtbaya_2_src
     - ffmpeg:kirtbaya_2_src#video=h264#raw=-preset ultrafast -tune zerolatency
@@ -87,6 +88,7 @@ streams:
     - http://127.0.0.1:8560/ezviz_fridge_entry.ts
   ezviz_general:
     - http://127.0.0.1:8560/ezviz_general.ts
+  mosaic_all: []
 preload:
   karamova_5_src: ""
   karamova_7_src: ""

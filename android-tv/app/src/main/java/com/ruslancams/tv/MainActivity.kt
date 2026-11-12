@@ -3,15 +3,17 @@ package com.ruslancams.tv
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
-import androidx.media3.exoplayer.ExoPlayer
+import androidx.core.content.ContextCompat
 import com.ruslancams.tv.databinding.ActivityMainBinding
 import com.ruslancams.tv.model.CameraItem
 import com.ruslancams.tv.model.GridConfig
-import com.ruslancams.tv.player.CamPlayerManager
+import com.ruslancams.tv.player.PlaybackStatus
+import com.ruslancams.tv.player.StreamPlayerController
 import com.ruslancams.tv.update.AppUpdateManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,14 +29,13 @@ import java.util.concurrent.TimeUnit
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private var mosaicPlayer: ExoPlayer? = null
-    private var fullscreenPlayer: ExoPlayer? = null
+    private var mosaicController: StreamPlayerController? = null
+    private var fullscreenController: StreamPlayerController? = null
     private var isFullscreen = false
 
-    private val serverHost = "66.151.34.27"
-    private val serverHttpPort = 8080
+    private val serverHost = "monobuket.tabcast.ru"
     private val authToken = "ruslan2026"
-    private val configUrl = "http://$serverHost:$serverHttpPort/grid.json?token=$authToken"
+    private val configUrl = "https://$serverHost/grid.json?token=$authToken"
     private val mosaicStreamUrl = "rtsp://$serverHost:8554/mosaic_all"
 
     private var camerasList: List<CameraItem> = emptyList()
@@ -48,11 +49,39 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private var currentTvSettings = com.ruslancams.tv.model.TvSettings()
+
     private val updateCheckHandler = Handler(Looper.getMainLooper())
     private val updateCheckRunnable = object : Runnable {
         override fun run() {
             AppUpdateManager.checkForUpdates(this@MainActivity)
             updateCheckHandler.postDelayed(this, 60 * 60 * 1000L) // check every 1 hour
+        }
+    }
+
+    private val configPollerHandler = Handler(Looper.getMainLooper())
+    private val configPollerRunnable = object : Runnable {
+        override fun run() {
+            CoroutineScope(Dispatchers.IO).launch {
+                val cfg = loadGridConfig()
+                if (cfg != null) {
+                    withContext(Dispatchers.Main) {
+                        if (cfg.tvSettings != currentTvSettings) {
+                            Log.i("RuslanTVPlayer", "Обновление настроек ТВ из облака: ${cfg.tvSettings}")
+                            val oldBuffer = currentTvSettings.bufferMs
+                            applyTvSettings(cfg.tvSettings)
+                            if (oldBuffer != cfg.tvSettings.bufferMs) {
+                                mosaicController?.customBufferMs = cfg.tvSettings.bufferMs
+                                fullscreenController?.customBufferMs = cfg.tvSettings.bufferMs
+                                if (!isFullscreen) {
+                                    startMosaicPlayer()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            configPollerHandler.postDelayed(this, 30_000L)
         }
     }
 
@@ -77,42 +106,92 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         hideSystemUI()
-        startMosaicPlayer()
         updateCheckHandler.post(updateCheckRunnable)
+        configPollerHandler.post(configPollerRunnable)
     }
 
     override fun onResume() {
         super.onResume()
         hideSystemUI()
-        if (mosaicPlayer == null && !isFullscreen) {
-            startMosaicPlayer()
+        if (isFullscreen) {
+            fullscreenController?.resume()
+        } else {
+            if (mosaicController == null) {
+                startMosaicPlayer()
+            } else {
+                mosaicController?.resume()
+            }
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        mosaicController?.pause()
+        fullscreenController?.pause()
     }
 
     override fun onStop() {
         super.onStop()
         updateCheckHandler.removeCallbacks(updateCheckRunnable)
+        configPollerHandler.removeCallbacks(configPollerRunnable)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        clockHandler.removeCallbacks(clockRunnable)
+        updateCheckHandler.removeCallbacks(updateCheckRunnable)
+        configPollerHandler.removeCallbacks(configPollerRunnable)
         stopMosaicPlayer()
-        fullscreenPlayer?.release()
-        fullscreenPlayer = null
+        fullscreenController?.release()
+        fullscreenController = null
     }
 
     private fun startMosaicPlayer() {
-        if (mosaicPlayer == null) {
-            val playerManager = CamPlayerManager(this)
-            // Mosaic tile is a single stream decoded in HW
-            mosaicPlayer = playerManager.createPlayer(mosaicStreamUrl, isGridTile = false)
-            binding.playerMosaic.player = mosaicPlayer
-        }
+        stopMosaicPlayer()
+        val controller = StreamPlayerController(
+            context = this,
+            playerView = binding.playerMosaic,
+            tag = "Mosaic",
+            isGridTile = false,
+            onStatusChanged = { status, message ->
+                updateMosaicStatusUI(status, message)
+            }
+        )
+        controller.customBufferMs = currentTvSettings.bufferMs
+        mosaicController = controller
+        controller.start(mosaicStreamUrl)
     }
 
     private fun stopMosaicPlayer() {
-        mosaicPlayer?.let {
-            it.stop()
-            it.release()
+        mosaicController?.release()
+        mosaicController = null
+    }
+
+    private fun updateMosaicStatusUI(status: PlaybackStatus, message: String) {
+        val (text, textColor, dotDrawable) = when (status) {
+            PlaybackStatus.LIVE -> Triple("ЭФИР МОЗАИКИ", R.color.status_green, R.drawable.dot_live)
+            PlaybackStatus.BUFFERING -> Triple("БУФЕРИЗАЦИЯ...", R.color.status_yellow, R.drawable.dot_buffering)
+            PlaybackStatus.CONNECTING -> Triple("ПОДКЛЮЧЕНИЕ...", R.color.status_yellow, R.drawable.dot_buffering)
+            PlaybackStatus.STALLED -> Triple("ВОССТАНОВЛЕНИЕ...", R.color.status_yellow, R.drawable.dot_buffering)
+            PlaybackStatus.ERROR -> Triple("НЕТ СИГНАЛА", R.color.status_red, R.drawable.dot_error)
+            PlaybackStatus.IDLE -> Triple("ОСТАНОВЛЕНО", R.color.text_secondary, R.drawable.dot_error)
         }
-        mosaicPlayer = null
-        binding.playerMosaic.player = null
+        binding.textPlaybackStatus.text = text
+        binding.textPlaybackStatus.setTextColor(ContextCompat.getColor(this, textColor))
+        binding.dotStatus.setBackgroundResource(dotDrawable)
+    }
+
+    private fun updateFullscreenStatusUI(status: PlaybackStatus, message: String) {
+        val (text, dotDrawable) = when (status) {
+            PlaybackStatus.LIVE -> Pair("HD MAIN", R.drawable.dot_live)
+            PlaybackStatus.BUFFERING -> Pair("БУФЕРИЗАЦИЯ", R.drawable.dot_buffering)
+            PlaybackStatus.CONNECTING -> Pair("ПОДКЛЮЧЕНИЕ", R.drawable.dot_buffering)
+            PlaybackStatus.STALLED -> Pair("ВОССТАНОВЛЕНИЕ", R.drawable.dot_buffering)
+            PlaybackStatus.ERROR -> Pair("ОШИБКА", R.drawable.dot_error)
+            PlaybackStatus.IDLE -> Pair("ПАУЗА", R.drawable.dot_error)
+        }
+        binding.textFullscreenStatus.text = text
+        binding.dotFullscreenStatus.setBackgroundResource(dotDrawable)
     }
 
     private fun hideSystemUI() {
@@ -129,9 +208,6 @@ class MainActivity : AppCompatActivity() {
     private fun setupMosaicGrid() {
         binding.layoutFullscreen.visibility = View.GONE
 
-        // Default 8 cameras in 4x2 order:
-        // Row 0: Karamova 5, Karamova 7, Kirtbaya 2, Kirtbaya 3
-        // Row 1: Lenina 4, Lenina 6, EZVIZ fridge, EZVIZ general
         val tiles = listOf(
             binding.tile0, binding.tile1, binding.tile2, binding.tile3,
             binding.tile4, binding.tile5, binding.tile6, binding.tile7
@@ -165,17 +241,18 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Focus first tile
         binding.tile0.postDelayed({
             binding.tile0.requestFocus()
         }, 500)
 
-        // Load cameras config from server in background
         CoroutineScope(Dispatchers.IO).launch {
-            val serverCams = loadCamerasConfig()
-            if (serverCams.isNotEmpty()) {
-                withContext(Dispatchers.Main) {
-                    // Match titles and IDs
+            val cfg = loadGridConfig()
+            val serverCams = cfg?.cameras ?: emptyList()
+            withContext(Dispatchers.Main) {
+                if (cfg != null) {
+                    applyTvSettings(cfg.tvSettings)
+                }
+                if (serverCams.isNotEmpty()) {
                     val map = serverCams.associateBy { it.id }
                     camerasList = defaultCameras.map { def -> map[def.id] ?: def }
                 }
@@ -183,23 +260,45 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadCamerasConfig(): List<CameraItem> {
+    private fun applyTvSettings(settings: com.ruslancams.tv.model.TvSettings) {
+        currentTvSettings = settings
+        binding.textClock.visibility = if (settings.clockEnabled) View.VISIBLE else View.GONE
+        mosaicController?.customBufferMs = settings.bufferMs
+        fullscreenController?.customBufferMs = settings.bufferMs
+    }
+
+    private fun loadGridConfig(): com.ruslancams.tv.model.GridConfig? {
         val client = OkHttpClient.Builder()
             .connectTimeout(5, TimeUnit.SECONDS)
             .readTimeout(5, TimeUnit.SECONDS)
             .build()
-        try {
-            val request = Request.Builder().url(configUrl).build()
-            client.newCall(request).execute().use { response ->
-                if (response.isSuccessful) {
-                    val body = response.body?.string()
-                    if (!body.isNullOrEmpty()) {
-                        return GridConfig.fromJson(body).cameras
+        val urls = listOf(
+            configUrl,
+            "http://$serverHost:8080/grid.json?token=$authToken",
+            "http://66.151.34.27:8080/grid.json?token=$authToken"
+        )
+        for (u in urls) {
+            try {
+                val request = Request.Builder().url(u).build()
+                val config = client.newCall(request).execute().use { response ->
+                    if (response.isSuccessful) {
+                        val body = response.body?.string()
+                        if (!body.isNullOrEmpty()) {
+                            com.ruslancams.tv.model.GridConfig.fromJson(body)
+                        } else null
+                    } else {
+                        Log.w("RuslanTVPlayer", "HTTP ${response.code} from $u")
+                        null
                     }
                 }
+                if (config != null) {
+                    return config
+                }
+            } catch (e: Exception) {
+                Log.w("RuslanTVPlayer", "Failed to fetch from $u: ${e.message}")
             }
-        } catch (_: Exception) {}
-        return emptyList()
+        }
+        return null
     }
 
     private fun openFullscreen(camera: CameraItem) {
@@ -207,14 +306,23 @@ class MainActivity : AppCompatActivity() {
         binding.layoutFullscreen.visibility = View.VISIBLE
         binding.textFullscreenTitle.text = camera.title
 
-        stopMosaicPlayer()
+        // Pause mosaic stream to conserve TV decoder bandwidth
+        mosaicController?.pause()
 
-        fullscreenPlayer?.release()
-        val playerManager = CamPlayerManager(this)
+        fullscreenController?.release()
+        val controller = StreamPlayerController(
+            context = this,
+            playerView = binding.playerFullscreen,
+            tag = "Fullscreen",
+            isGridTile = false,
+            onStatusChanged = { status, message ->
+                updateFullscreenStatusUI(status, message)
+            }
+        )
+        fullscreenController = controller
         val streamUrl = camera.getMainStreamUrl(serverHost)
+        controller.start(streamUrl)
 
-        fullscreenPlayer = playerManager.createPlayer(streamUrl, isGridTile = false)
-        binding.playerFullscreen.player = fullscreenPlayer
         binding.layoutFullscreen.isFocusable = true
         binding.layoutFullscreen.requestFocus()
     }
@@ -223,12 +331,16 @@ class MainActivity : AppCompatActivity() {
         if (!isFullscreen) return
         isFullscreen = false
         binding.layoutFullscreen.visibility = View.GONE
-        fullscreenPlayer?.stop()
-        fullscreenPlayer?.release()
-        fullscreenPlayer = null
-        binding.playerFullscreen.player = null
 
-        startMosaicPlayer()
+        fullscreenController?.release()
+        fullscreenController = null
+
+        // Resume mosaic
+        if (mosaicController == null) {
+            startMosaicPlayer()
+        } else {
+            mosaicController?.resume()
+        }
         binding.gridInteractiveOverlay.requestFocus()
     }
 
@@ -248,12 +360,5 @@ class MainActivity : AppCompatActivity() {
             }
         }
         return super.onKeyDown(keyCode, event)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        clockHandler.removeCallbacks(clockRunnable)
-        stopMosaicPlayer()
-        fullscreenPlayer?.release()
     }
 }

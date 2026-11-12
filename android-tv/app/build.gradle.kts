@@ -11,8 +11,8 @@ android {
         applicationId = "com.ruslancams.tv"
         minSdk = 24
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.0.2"
+        versionCode = 7
+        versionName = "1.0.6"
 
         vectorDrawables {
             useSupportLibrary = true
@@ -63,4 +63,7 @@ dependencies {
     // Network & JSON
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
+    // Unit Tests
+    testImplementation("junit:junit:4.13.2")
 }

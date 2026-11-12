@@ -44,9 +44,15 @@ data class CameraItem(
     }
 }
 
+data class TvSettings(
+    val bufferMs: Int = 2500,
+    val clockEnabled: Boolean = true
+)
+
 data class GridConfig(
     val go2rtcPort: Int,
-    val cameras: List<CameraItem>
+    val cameras: List<CameraItem>,
+    val tvSettings: TvSettings = TvSettings()
 ) {
     companion object {
         fun defaultList(): List<CameraItem> = listOf(
@@ -85,7 +91,17 @@ data class GridConfig(
                 }
             }
 
-            return if (list.isNotEmpty()) GridConfig(port, list) else GridConfig(port, defaultList())
+            val tvObj = json.optJSONObject("tv_settings")
+            val tvSettings = if (tvObj != null) {
+                TvSettings(
+                    bufferMs = tvObj.optInt("buffer_ms", 2500),
+                    clockEnabled = tvObj.optBoolean("clock_enabled", true)
+                )
+            } else {
+                TvSettings()
+            }
+
+            return if (list.isNotEmpty()) GridConfig(port, list, tvSettings) else GridConfig(port, defaultList(), tvSettings)
         }
     }
 }

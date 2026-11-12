@@ -30,45 +30,52 @@ class ApiHandler(http.server.BaseHTTPRequestHandler):
                 body = self.rfile.read(length)
                 payload = json.loads(body.decode("utf-8"))
                 new_cams = payload.get("cams")
-                if not isinstance(new_cams, list):
-                    raise ValueError("cams must be a list")
 
                 # 1. Update www/grid.json
                 with open(GRID_FILE, "r", encoding="utf-8") as gf:
                     grid_data = json.load(gf)
-                grid_data["cams"] = new_cams
+
+                if new_cams is not None:
+                    if not isinstance(new_cams, list):
+                        raise ValueError("cams must be a list")
+                    grid_data["cams"] = new_cams
+
+                if "tv_settings" in payload and isinstance(payload["tv_settings"], dict):
+                    grid_data["tv_settings"] = payload["tv_settings"]
+
                 atomic_write(GRID_FILE, json.dumps(grid_data, ensure_ascii=False, indent=1))
 
                 # 2. Synchronize cams.json so server restarts keep the exact order
-                with open(CAMS_FILE, "r", encoding="utf-8") as cf:
-                    cams_data = json.load(cf)
+                if new_cams is not None:
+                    with open(CAMS_FILE, "r", encoding="utf-8") as cf:
+                        cams_data = json.load(cf)
 
-                existing_map = {c.get("id"): c for c in cams_data.get("grid", [])}
-                new_grid_list = []
-                for item in new_cams:
-                    cid = item.get("id")
-                    if cid in existing_map:
-                        rec = dict(existing_map[cid])
-                        rec["title"] = item.get("title", rec.get("title", cid))
-                        new_grid_list.append(rec)
-                    elif "_" in cid and not cid.startswith("ezviz"):
-                        parts = cid.split("_")
-                        dev = parts[0]
-                        ch = parts[1]
-                        if ch.isdigit():
-                            new_grid_list.append({
-                                "id": cid,
-                                "device": dev,
-                                "channel": int(ch),
-                                "title": item.get("title", cid),
-                                "stream": item.get("default", "sub")
-                            })
+                    existing_map = {c.get("id"): c for c in cams_data.get("grid", [])}
+                    new_grid_list = []
+                    for item in new_cams:
+                        cid = item.get("id")
+                        if cid in existing_map:
+                            rec = dict(existing_map[cid])
+                            rec["title"] = item.get("title", rec.get("title", cid))
+                            new_grid_list.append(rec)
+                        elif "_" in cid and not cid.startswith("ezviz"):
+                            parts = cid.split("_")
+                            dev = parts[0]
+                            ch = parts[1]
+                            if ch.isdigit():
+                                new_grid_list.append({
+                                    "id": cid,
+                                    "device": dev,
+                                    "channel": int(ch),
+                                    "title": item.get("title", cid),
+                                    "stream": item.get("default", "sub")
+                                })
 
-                if new_grid_list:
-                    cams_data["grid"] = new_grid_list
-                    atomic_write(CAMS_FILE, json.dumps(cams_data, ensure_ascii=False, indent=2))
+                    if new_grid_list:
+                        cams_data["grid"] = new_grid_list
+                        atomic_write(CAMS_FILE, json.dumps(cams_data, ensure_ascii=False, indent=2))
 
-                resp = json.dumps({"status": "ok", "count": len(new_cams)}).encode("utf-8")
+                resp = json.dumps({"status": "ok", "count": len(new_cams) if new_cams is not None else 0}).encode("utf-8")
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.send_header("Access-Control-Allow-Origin", "*")

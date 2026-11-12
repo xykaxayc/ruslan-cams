@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 object AppUpdateManager {
     private const val TAG = "AppUpdateManager"
-    private const val UPDATE_URL = "http://66.151.34.27:8080/version.json"
+    private const val UPDATE_URL = "https://monobuket.tabcast.ru/version.json"
 
     private val isUpdating = AtomicBoolean(false)
     private val client = OkHttpClient.Builder()

@@ -437,7 +437,7 @@ def publish_streams(dev_streams):
         grid.append({"id": sid, "title": cam["title"], "default": "default", "streams": {"default": sid}})
 
     # Резервируем поток для внешней публикации мозаики
-    streams["mosaic_all"] = ""
+    streams["mosaic_all"] = []
 
     lines = [
         "api:",
@@ -448,13 +448,16 @@ def publish_streams(dev_streams):
         "webrtc:",
         '  listen: ":8555"',
         "  candidates:",
+        "    - monobuket.tabcast.ru:8555",
         "    - 66.151.34.27:8555",
         "log:",
         "  level: info",
         "streams:" if streams else "streams: {}"
     ]
     for sid, val in streams.items():
-        if val == "" or val is None:
+        if val == []:
+            lines.append(f"  {sid}: []")
+        elif val == "" or val is None:
             lines.append(f'  {sid}: ""')
         elif isinstance(val, list):
             lines.append(f"  {sid}:")
@@ -479,8 +482,18 @@ def publish_streams(dev_streams):
         lines += [f'  {sid}: ""' for sid in preload_sids]
     atomic_write(os.path.join(HERE, "go2rtc.yaml"), "\n".join(lines) + "\n")
     os.makedirs(os.path.join(HERE, "www"), exist_ok=True)
-    atomic_write(os.path.join(HERE, "www", "grid.json"),
-                 json.dumps({"go2rtc": G2R_PORT, "cams": grid}, ensure_ascii=False, indent=1))
+    grid_json_path = os.path.join(HERE, "www", "grid.json")
+    existing_tv_settings = {"buffer_ms": 2500, "clock_enabled": True}
+    if os.path.exists(grid_json_path):
+        try:
+            with open(grid_json_path, "r", encoding="utf-8") as f:
+                old_grid = json.load(f)
+                if "tv_settings" in old_grid:
+                    existing_tv_settings = old_grid["tv_settings"]
+        except Exception:
+            pass
+    atomic_write(grid_json_path,
+                 json.dumps({"go2rtc": G2R_PORT, "tv_settings": existing_tv_settings, "cams": grid}, ensure_ascii=False, indent=1))
     return stream_dev
 
 
@@ -624,10 +637,10 @@ def health_loop(stream_dev, dev_streams, passwords):
                     parts.append(f"{cam} {kbps} кбит/с")
             for dev in sorted({d for d, _ in TUN}):
                 tunnels = [t for (d, _), t in TUN.items() if d == dev]
-                if dev in stalled:
-                    ok, note, lat = False, "video stalled", -1
-                elif dev in active:
+                if dev in active:
                     ok, note, lat = True, "active", 0
+                elif dev in stalled:
+                    ok, note, lat = False, "video stalled", -1
                 else:
                     ok, note, lat = True, "", 0
                     for t in tunnels:
@@ -651,9 +664,11 @@ def health_loop(stream_dev, dev_streams, passwords):
                             if owner == dev:
                                 prev.pop(cam, None)
             if CFG.get("ezviz"):
-                fails["ezviz"] = fails.get("ezviz", 0) + 1 if "ezviz" in stalled else 0
-                if fails["ezviz"] >= FAILS_TO_RECONNECT:
-                    log.warning("EZVIZ: видеопоток завис — перезапускаю мост")
+                # Only restart ezviz bridge if ALL ezviz cameras are stalled (none active)
+                ezviz_down = ("ezviz" in stalled) and ("ezviz" not in active)
+                fails["ezviz"] = fails.get("ezviz", 0) + 1 if ezviz_down else 0
+                if fails["ezviz"] >= 6:
+                    log.warning("EZVIZ: все видеопотоки зависли — перезапускаю мост")
                     start_ezviz()
                     fails["ezviz"] = 0
                     for cam, owner in stream_dev.items():
