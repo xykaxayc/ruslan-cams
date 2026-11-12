@@ -438,6 +438,33 @@
     transform: translateY(0);
   }
 
+  .mosaic-hint-banner {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-size: 11px;
+    text-align: center;
+    max-width: 90%;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s ease;
+  }
+  .mosaic-hint-banner:active {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  .mosaic-hint-banner svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+    flex-shrink: 0;
+    color: #60a5fa;
+  }
+
   /* Fullscreen Single Camera Modal */
   .single-cam-modal {
     position: fixed;
@@ -947,14 +974,23 @@
     .btn-text {
       display: none;
     }
+    .view-mode-toggle .btn-text {
+      display: inline !important;
+      font-size: 11px !important;
+      font-weight: 500;
+    }
+    .view-mode-toggle .btn-toggle {
+      padding: 4px 7px !important;
+      gap: 4px !important;
+    }
     #grid-container {
       padding: 8px;
-      padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+      padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
       padding-left: max(8px, env(safe-area-inset-left, 0px));
       padding-right: max(8px, env(safe-area-inset-right, 0px));
     }
     #grid {
-      gap: 8px;
+      gap: 10px;
     }
     .desktop-only {
       display: none !important;
@@ -971,6 +1007,43 @@
     }
     .quality-badge {
       display: none;
+    }
+
+    /* Compact Mosaic view on mobile */
+    .mosaic-tile {
+      padding: 3px !important;
+    }
+    .mosaic-tile .tile-badge {
+      padding: 2px 4px !important;
+      font-size: 8.5px !important;
+      line-height: 1.1 !important;
+      gap: 3px !important;
+      max-width: calc(100% - 6px) !important;
+      border-radius: 4px !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.7) !important;
+    }
+    .mosaic-tile .tile-name {
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      display: inline-block !important;
+      max-width: 100% !important;
+    }
+    .mosaic-tile .camera-dot {
+      width: 4px !important;
+      height: 4px !important;
+      min-width: 4px !important;
+    }
+    .mosaic-tile .tile-zoom-hint {
+      display: none !important;
+    }
+    .mosaic-view {
+      flex-direction: column;
+      justify-content: center;
+      gap: 14px;
+    }
+    .mosaic-hint-banner {
+      display: flex !important;
     }
   }
 
@@ -1260,6 +1333,10 @@ window.addEventListener('DOMContentLoaded', () => {
     <div class="mosaic-wrapper">
       <video-stream id="mosaic-player" class="mosaic-player" background mode="webrtc,mse"></video-stream>
       <div id="mosaic-overlay" class="mosaic-overlay"></div>
+    </div>
+    <div class="mosaic-hint-banner" title="Нажмите для перехода в режим сетки">
+      <svg viewBox="0 0 24 24"><path d="M16.48 2.52c3.27 1.55 5.61 4.72 5.97 8.48h1.5C23.44 4.84 18.29 0 12 0l-.66.03 3.81 3.81 1.33-1.32zM7.52 21.48C4.25 19.93 1.91 16.76 1.55 13H.05C.56 19.16 5.71 24 12 24l.66-.03-3.81-3.81-1.33 1.32z"/></svg>
+      <span>Поверните горизонтально или нажмите сюда для «Сетки»</span>
     </div>
   </div>
 
@@ -1773,23 +1850,26 @@ const grid = document.getElementById('grid');
 function layoutGrid() {
   const n = currentCams.length;
   if (!n) return;
-  const width = grid.clientWidth;
-  const height = grid.clientHeight;
+  const width = grid.clientWidth || (window.innerWidth - 16);
+  const height = grid.clientHeight || (window.innerHeight - 80);
   const isMobile = window.innerWidth <= 768;
   const isPortrait = height > width;
 
   if (isMobile && isPortrait) {
+    const cellHeight = Math.round(width * 9 / 16);
     grid.style.gridTemplateColumns = '1fr';
     grid.style.gridTemplateRows = 'none';
-    grid.style.gridAutoRows = 'auto';
+    grid.style.gridAutoRows = `${cellHeight}px`;
     grid.style.gap = '12px';
     return;
   }
 
   if (isMobile && !isPortrait) {
+    const colWidth = Math.floor((width - 8) / 2);
+    const cellHeight = Math.round(colWidth * 9 / 16);
     grid.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
     grid.style.gridTemplateRows = 'none';
-    grid.style.gridAutoRows = 'auto';
+    grid.style.gridAutoRows = `${cellHeight}px`;
     grid.style.gap = '8px';
     return;
   }
@@ -2012,8 +2092,11 @@ const MOSAIC_ORDER = [
 ];
 
 const isMobileDevice = window.innerWidth <= 768 || /iphone|ipad|ipod|android/i.test(navigator.userAgent);
-const defaultMode = (isMobileDevice && window.innerHeight > window.innerWidth) ? 'grid' : 'mosaic';
-let currentViewMode = preferences.get('view-mode') || defaultMode;
+const isPortrait = window.innerHeight > window.innerWidth;
+// On mobile devices in portrait, always default to 'grid' view (scrollable full-width cards)
+let currentViewMode = (isMobileDevice && isPortrait)
+  ? (preferences.get('mobile-view-mode') || 'grid')
+  : (preferences.get('view-mode') || 'mosaic');
 let activeSingleCam = null;
 
 const mosaicView = document.getElementById('mosaic-view');
@@ -2070,7 +2153,7 @@ function renderMosaicOverlay() {
 
     const badge = document.createElement('div');
     badge.className = 'tile-badge';
-    badge.innerHTML = `<span class="camera-dot"></span><span>${cam.title}</span>`;
+    badge.innerHTML = `<span class="camera-dot"></span><span class="tile-name">${cam.title}</span>`;
 
     const hint = document.createElement('div');
     hint.className = 'tile-zoom-hint';
@@ -2185,7 +2268,11 @@ window.addEventListener('popstate', () => {
 
 function switchViewMode(mode) {
   currentViewMode = mode;
-  preferences.set('view-mode', mode);
+  if (isMobileDevice && (window.innerHeight > window.innerWidth)) {
+    preferences.set('mobile-view-mode', mode);
+  } else {
+    preferences.set('view-mode', mode);
+  }
 
   if (btnModeMosaic) btnModeMosaic.classList.toggle('active', mode === 'mosaic');
   if (btnModeGrid) btnModeGrid.classList.toggle('active', mode === 'grid');
@@ -2204,6 +2291,11 @@ function switchViewMode(mode) {
     grid.style.display = 'grid';
     renderGrid();
   }
+}
+
+const mosaicHint = document.querySelector('.mosaic-hint-banner');
+if (mosaicHint) {
+  mosaicHint.addEventListener('click', () => switchViewMode('grid'));
 }
 
 if (btnModeMosaic) {
