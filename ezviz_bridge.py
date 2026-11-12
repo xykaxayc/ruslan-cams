@@ -50,8 +50,9 @@ def create_server(client, cameras, keys, port=8560):
     configs = {}
     for cam in cameras:
         path = f"/{cam['id']}.ts"
+        channel = int(cam.get('channel', 0))
         configs[path] = sdk.StreamProxyConfig(
-            serial=cam['serial'], channel=1, client_type=9, token_index=0,
+            serial=cam['serial'], channel=channel, client_type=9, token_index=0,
             refresh_vtm=True, timeout=15, path=path,
             ffmpeg_path=shutil.which('ffmpeg') or '/opt/homebrew/bin/ffmpeg',
             allow_encrypted=False, decrypt_video=True, decrypt_codec='auto',
