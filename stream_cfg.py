@@ -19,14 +19,24 @@ BACKUP = os.path.join(HERE, "backup")
 os.makedirs(BACKUP, exist_ok=True)
 
 
-def pwd():
-    return subprocess.run(["security", "find-generic-password", "-s", "ruslan-cams-redline", "-a", "admin", "-w"],
-                          capture_output=True, text=True).stdout.rstrip("\n")
+def pwd(device):
+    pwds = CFG.get("passwords") or {}
+    if device in pwds:
+        return str(pwds[device])
+    env_p = os.environ.get(f"RL_PASS_{device.upper()}")
+    if env_p:
+        return env_p
+    try:
+        return subprocess.run(["security", "find-generic-password", "-s", "ruslan-cams-redline", "-a", "admin", "-w"],
+                              capture_output=True, text=True).stdout.rstrip("\n")
+    except Exception:
+        return ""
 
 
 def ensure_p2p():
     try:
-        requests.get(P2P_API + "/Check", timeout=2); return None
+        requests.post(P2P_API + "/Check", json={}, timeout=2)
+        return None
     except requests.RequestException:
         d = os.path.join(HERE, "p2p")
         p = subprocess.Popen([os.path.join(d, "RSP2PServer")], cwd=d, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -36,17 +46,21 @@ def ensure_p2p():
 
 def session(device):
     pid = {v: k for k, v in CFG["devices"].items()}[device]
-    j = requests.post(P2P_API + "/StartP2P", timeout=60, data=json.dumps(
-        {"ip or id": pid, "log_msg": "sdk_new", "p2p alone": False, "p2p type": "tutk", "protocol": "http", "web port": 80})).json()
+    j = requests.post(P2P_API + "/StartP2P", timeout=60, json={
+        "ip or id": pid, "log_msg": "sdk_new", "p2p alone": False, "p2p type": "tutk", "protocol": "http", "web port": 80
+    }).json()
     if j.get("error_code") != "success":
         sys.exit(f"туннель: {j}")
+    seq = j.get("p2p_seq")
     base = f"http://127.0.0.1:{j['port']}"
     s = requests.Session()
-    r = s.post(f"{base}/API/Web/Login?{time.strftime('%Y-%m-%d@%H:%M:%S')}", auth=HTTPDigestAuth("admin", pwd()), json={}, timeout=30)
+    r = s.post(f"{base}/API/Web/Login?{time.strftime('%Y-%m-%d@%H:%M:%S')}", auth=HTTPDigestAuth("admin", pwd(device)), json={}, timeout=30)
     if r.status_code != 200:
+        if seq is not None:
+            requests.post(P2P_API + "/StopP2P", json={"p2p_seq": seq, "p2p_type": "tutk"}, timeout=5)
         sys.exit(f"логин {r.status_code}")
-    s.headers["X-csrftoken"] = (r.json().get("data") or {}).get("token", "")
-    return s, base
+    s.headers["X-csrftoken"] = (r.json().get("data") or {}).get("token") or r.headers.get("X-csrftoken", "")
+    return s, base, seq
 
 
 def call(s, base, path, data):
@@ -68,9 +82,9 @@ def conv(v):
 
 def main():
     mode, device = sys.argv[1], sys.argv[2]
-    kind = "MobileStream"
+    kind = "SubStream"
     child = ensure_p2p()
-    s, base = session(device)
+    s, base, seq = session(device)
     try:
         if mode == "read":
             kind = sys.argv[3] if len(sys.argv) > 3 else kind
@@ -80,11 +94,18 @@ def main():
             print(f"Get {code} → копия {fn}")
             print(json.dumps(j.get("data", j), ensure_ascii=False, indent=1)[:4000])
         elif mode == "set":
-            ch, changes = sys.argv[3], dict(a.split("=", 1) for a in sys.argv[4:])
+            idx = 3
+            if sys.argv[idx] in ("SubStream", "MobileStream", "MainStream"):
+                kind = sys.argv[idx]
+                idx += 1
+            ch = sys.argv[idx]
+            changes = dict(a.split("=", 1) for a in sys.argv[idx + 1:])
             code, cur = call(s, base, f"StreamConfig/{kind}/Get", {})
             fn = os.path.join(BACKUP, f"{device}_{kind}_before-set_{time.strftime('%Y%m%d-%H%M%S')}.json")
             json.dump(cur, open(fn, "w"), ensure_ascii=False, indent=1)
             data = copy.deepcopy(cur["data"])
+            # Remove unconfigured channels so Redline doesn't throw 400 param_error
+            data["channel_info"] = {c: ch_data for c, ch_data in data["channel_info"].items() if "reason" not in ch_data}
             chn = data["channel_info"][ch]
             for k, v in changes.items():
                 if k not in chn:
@@ -101,14 +122,24 @@ def main():
                               for c in cur["data"]["channel_info"] if c != ch)
             print(f"сверка {ch}: {'OK' if ok else 'НЕ СОВПАЛО'}; " + ", ".join(f"{k}={got.get(k)!r}" for k in changes))
             print(f"остальные каналы не тронуты: {'да' if others_same else 'НЕТ — проверить!'}")
-            print(f"откат: python3 stream_cfg.py restore {device} {fn}")
+            print(f"откат: python3 stream_cfg.py restore {device} {fn} {kind}")
         elif mode == "restore":
             bk = json.load(open(sys.argv[3]))
-            kind = "MobileStream"
-            code, res = call(s, base, f"StreamConfig/{kind}/Set", bk["data"])
+            kind = sys.argv[4] if len(sys.argv) > 4 else "SubStream"
+            data = copy.deepcopy(bk["data"])
+            data["channel_info"] = {c: ch_data for c, ch_data in data["channel_info"].items() if "reason" not in ch_data}
+            code, res = call(s, base, f"StreamConfig/{kind}/Set", data)
             print(f"restore {code}: {json.dumps(res, ensure_ascii=False)[:300]}")
     finally:
-        call(s, base, "Web/Logout", {})
+        try:
+            call(s, base, "Web/Logout", {})
+        except Exception:
+            pass
+        if seq is not None:
+            try:
+                requests.post(P2P_API + "/StopP2P", json={"p2p_seq": seq, "p2p_type": "tutk"}, timeout=5)
+            except Exception:
+                pass
         if child:
             child.terminate()
 
