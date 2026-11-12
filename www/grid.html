@@ -54,8 +54,8 @@
     flex-direction: column;
     height: 100vh;
     height: 100dvh;
-    padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
-             env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
   }
 
   /* Toolbar */
@@ -64,8 +64,11 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 52px;
-    padding: 0 16px;
+    height: calc(52px + env(safe-area-inset-top, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-bottom: 0;
     background: var(--bg-surface);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
@@ -450,7 +453,11 @@
     to { opacity: 1; transform: scale(1); }
   }
   .single-cam-header {
-    height: 48px;
+    height: calc(48px + env(safe-area-inset-top, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-bottom: 0;
     background: rgba(18, 22, 31, 0.92);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
@@ -458,7 +465,6 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 16px;
     flex-shrink: 0;
     z-index: 10;
   }
@@ -488,7 +494,8 @@
     flex: 1 1 auto;
     position: relative;
     width: 100%;
-    height: calc(100% - 48px);
+    height: 100%;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     background: #000;
     display: flex;
     align-items: center;
@@ -525,6 +532,8 @@
     position: relative;
     min-width: 0;
     min-height: 0;
+    aspect-ratio: 16 / 9;
+    cursor: pointer;
     border-radius: var(--radius-md);
     background: #000;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
@@ -532,6 +541,9 @@
     overflow: hidden;
     transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease, opacity 0.2s ease;
     contain: layout style;
+  }
+  body.edit-mode .cell {
+    cursor: grab;
   }
 
   .cell:hover {
@@ -909,8 +921,18 @@
 
   @media (max-width: 768px) {
     .toolbar {
-      height: 48px;
-      padding: 0 10px;
+      height: calc(48px + env(safe-area-inset-top, 0px));
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-left: max(10px, env(safe-area-inset-left, 0px));
+      padding-right: max(10px, env(safe-area-inset-right, 0px));
+      gap: 8px;
+    }
+    .brand {
+      gap: 8px;
+    }
+    .brand-icon {
+      width: 26px;
+      height: 26px;
     }
     .brand-title {
       font-size: 13px;
@@ -926,19 +948,120 @@
       display: none;
     }
     #grid-container {
-      padding: 6px;
+      padding: 8px;
+      padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+      padding-left: max(8px, env(safe-area-inset-left, 0px));
+      padding-right: max(8px, env(safe-area-inset-right, 0px));
     }
     #grid {
-      gap: 6px;
+      gap: 8px;
+    }
+    .desktop-only {
+      display: none !important;
+    }
+    .mobile-only {
+      display: inline-flex !important;
+    }
+    .single-cam-header {
+      padding-left: max(10px, env(safe-area-inset-left, 0px));
+      padding-right: max(10px, env(safe-area-inset-right, 0px));
+    }
+    .single-cam-title-badge {
+      font-size: 13px;
+    }
+    .quality-badge {
+      display: none;
     }
   }
 
-  /* Safe-area insets for iPhone / iPad / Android notch */
-  body {
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    padding-left: env(safe-area-inset-left, 0px);
-    padding-right: env(safe-area-inset-right, 0px);
+  @media (min-width: 769px) {
+    .mobile-only {
+      display: none !important;
+    }
+  }
+
+  /* Mobile Action Sheet Modal */
+  .mobile-sheet {
+    width: 100%;
+    max-width: 440px;
+    border-radius: var(--radius-lg);
+  }
+
+  @media (max-width: 768px) {
+    .modal-overlay.open .mobile-sheet {
+      margin: 0;
+      width: 100%;
+      max-width: 100%;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+      align-self: flex-end;
+      max-height: 85vh;
+      animation: sheetSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+  }
+
+  @keyframes sheetSlideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .mobile-menu-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 16px;
+    max-height: calc(80vh - 60px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    color: var(--text-primary);
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    font-family: inherit;
+    text-decoration: none;
+    box-sizing: border-box;
+  }
+
+  .mobile-menu-item:hover, .mobile-menu-item:active {
+    background: rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .mobile-menu-item svg {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+    flex-shrink: 0;
+    color: #60a5fa;
+  }
+
+  .mobile-menu-item-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .mobile-menu-item-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .mobile-menu-item-sub {
+    font-size: 11px;
+    color: var(--text-secondary);
   }
 
   .ios-install-banner {
@@ -1001,7 +1124,8 @@
     line-height: 1;
   }
 </style>
-<script type="module" src="./video-stream.js?v=25">
+<script type="module" src="./video-stream.js?v=25"></script>
+<script>
 // --- PWA Service Worker & Install Prompt Logic ---
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -1010,48 +1134,56 @@ if ('serviceWorker' in navigator) {
 }
 
 let deferredPrompt = null;
-const pwaBtn = document.getElementById('btn-pwa-install');
-
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
+  const pwaBtn = document.getElementById('btn-pwa-install');
   if (pwaBtn) pwaBtn.style.display = 'inline-flex';
+  const mobilePwaBtn = document.getElementById('mobile-btn-pwa');
+  if (mobilePwaBtn) mobilePwaBtn.style.display = 'flex';
 });
 
-if (pwaBtn) {
-  pwaBtn.addEventListener('click', async () => {
+window.addEventListener('DOMContentLoaded', () => {
+  const handlePwaClick = async () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
       const choice = await deferredPrompt.userChoice;
       if (choice.outcome === 'accepted') {
-        pwaBtn.style.display = 'none';
+        const pwaBtn = document.getElementById('btn-pwa-install');
+        if (pwaBtn) pwaBtn.style.display = 'none';
+        const mobilePwaBtn = document.getElementById('mobile-btn-pwa');
+        if (mobilePwaBtn) mobilePwaBtn.style.display = 'none';
       }
       deferredPrompt = null;
     }
-  });
-}
+  };
 
-// iOS Safari detection & install banner
-const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
-const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
-const bannerDismissed = localStorage.getItem('ios_pwa_banner_dismissed');
+  const pwaBtn = document.getElementById('btn-pwa-install');
+  if (pwaBtn) pwaBtn.addEventListener('click', handlePwaClick);
+  const mobilePwaBtn = document.getElementById('mobile-btn-pwa');
+  if (mobilePwaBtn) mobilePwaBtn.addEventListener('click', handlePwaClick);
 
-if (isIos && !isStandalone && !bannerDismissed) {
-  setTimeout(() => {
-    const banner = document.getElementById('ios-banner');
-    if (banner) banner.classList.add('active');
-  }, 2000);
-}
+  // iOS Safari detection & install banner
+  const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+  const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+  const bannerDismissed = localStorage.getItem('ios_pwa_banner_dismissed');
 
-const closeIosBtn = document.getElementById('close-ios-banner');
-if (closeIosBtn) {
-  closeIosBtn.addEventListener('click', () => {
-    const banner = document.getElementById('ios-banner');
-    if (banner) banner.classList.remove('active');
-    localStorage.setItem('ios_pwa_banner_dismissed', 'true');
-  });
-}
+  if (isIos && !isStandalone && !bannerDismissed) {
+    setTimeout(() => {
+      const banner = document.getElementById('ios-banner');
+      if (banner) banner.classList.add('active');
+    }, 2000);
+  }
 
+  const closeIosBtn = document.getElementById('close-ios-banner');
+  if (closeIosBtn) {
+    closeIosBtn.addEventListener('click', () => {
+      const banner = document.getElementById('ios-banner');
+      if (banner) banner.classList.remove('active');
+      localStorage.setItem('ios_pwa_banner_dismissed', 'true');
+    });
+  }
+});
 </script>
 </head>
 <body>
@@ -1068,31 +1200,10 @@ if (closeIosBtn) {
   </div>
 
   <div class="nav-controls">
-    <button id="btn-add-camera" class="btn" title="Добавить камеру">
-      <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-      <span class="btn-text">Добавить</span>
-    </button>
-    <button id="btn-pwa-install" class="btn" style="display:none;" title="Установить приложение на телефон/планшет">
-      <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
-      <span class="btn-text">Установить PWA</span>
-    </button>
-    <a href="/monobuket-tv.apk" download class="btn" style="text-decoration:none; color:inherit;" title="Скачать приложение для Android TV">
-      <svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 1.99-.9 1.99-2L23 5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg>
-      <span class="btn-text">ТВ App (.apk)</span>
-    </a>
-    <button id="btn-tv-settings" class="btn" title="Настройки приложения на Android TV">
-      <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
-      <span class="btn-text">Настройки ТВ</span>
-    </button>
-    <button id="btn-edit-order" class="btn" title="Настроить порядок и состав камер">
-      <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
-      <span class="btn-text">Распорядок</span>
-    </button>
-    
     <div class="view-mode-toggle" id="view-mode-toggle">
-      <button id="btn-mode-mosaic" class="btn-toggle active" title="1 легкий поток на 8 камер (15 FPS, экономия трафика и стабильность)">
+      <button id="btn-mode-mosaic" class="btn-toggle active" title="1 легкий поток на 8 камер (15 FPS, экономия трафика)">
         <svg viewBox="0 0 24 24"><path d="M3 3v8h8V3H3zm6 6H5V5h4v4zm-6 4v8h8v-8H3zm6 6H5v-4h4v4zm4-16v8h8V3h-8zm6 6h-4V5h4v4zm-6 4v8h8v-8h-8zm6 6h-4v-4h4v4z"/></svg>
-        <span class="btn-text">15 FPS Мозаика</span>
+        <span class="btn-text">Мозаика</span>
       </button>
       <button id="btn-mode-grid" class="btn-toggle" title="Отдельные независимые плееры для каждой камеры">
         <svg viewBox="0 0 24 24"><path d="M4 4h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 10h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 16h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4z"/></svg>
@@ -1100,7 +1211,28 @@ if (closeIosBtn) {
       </button>
     </div>
 
-    <div class="control-group">
+    <button id="btn-add-camera" class="btn desktop-only" title="Добавить камеру">
+      <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      <span class="btn-text">Добавить</span>
+    </button>
+    <button id="btn-pwa-install" class="btn desktop-only" style="display:none;" title="Установить приложение на телефон/планшет">
+      <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+      <span class="btn-text">Установить PWA</span>
+    </button>
+    <a href="/monobuket-tv.apk" download class="btn desktop-only" style="text-decoration:none; color:inherit;" title="Скачать приложение для Android TV">
+      <svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 1.99-.9 1.99-2L23 5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg>
+      <span class="btn-text">ТВ App (.apk)</span>
+    </a>
+    <button id="btn-tv-settings" class="btn desktop-only" title="Настройки приложения на Android TV">
+      <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      <span class="btn-text">Настройки ТВ</span>
+    </button>
+    <button id="btn-edit-order" class="btn desktop-only" title="Настроить порядок и состав камер">
+      <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+      <span class="btn-text">Распорядок</span>
+    </button>
+    
+    <div class="control-group desktop-only">
       <span>Буфер:</span>
       <div class="custom-select">
         <select id="buffer" aria-label="Буфер воспроизведения">
@@ -1112,8 +1244,12 @@ if (closeIosBtn) {
       </div>
     </div>
 
-    <button id="btn-fullscreen" class="btn btn-icon" title="На весь экран" aria-label="Полноэкранный режим">
+    <button id="btn-fullscreen" class="btn btn-icon desktop-only" title="На весь экран" aria-label="Полноэкранный режим">
       <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+    </button>
+
+    <button id="btn-mobile-menu" class="btn btn-icon mobile-only" title="Меню" aria-label="Меню">
+      <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
     </button>
   </div>
 </header>
@@ -1143,9 +1279,9 @@ if (closeIosBtn) {
         <button id="btn-single-fullscreen" class="btn btn-icon" title="На весь экран" aria-label="Полноэкранный режим">
           <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
         </button>
-        <button id="btn-close-single" class="btn btn-close-single" title="Назад к мозаике (Esc)">
+        <button id="btn-close-single" class="btn btn-close-single" title="Назад (Esc)">
           <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor;"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-          <span class="btn-text">Назад к мозаике</span>
+          <span class="btn-text">Закрыть</span>
         </button>
       </div>
     </div>
@@ -1259,6 +1395,81 @@ if (closeIosBtn) {
     <div class="modal-footer">
       <button class="btn btn-close-modal">Отмена</button>
       <button id="btn-save-tv-settings" class="btn btn-primary">Применить настройки на ТВ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Mobile Action Sheet Menu -->
+<div id="modal-mobile-menu" class="modal-overlay">
+  <div class="modal mobile-sheet">
+    <div class="modal-header">
+      <h3 class="modal-title">Меню и управление</h3>
+      <button class="btn btn-icon btn-close-modal" aria-label="Закрыть">
+        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+    </div>
+    <div class="modal-body mobile-menu-list">
+      <button id="mobile-btn-pwa" class="mobile-menu-item" style="display:none;">
+        <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+        <div class="mobile-menu-item-text">
+          <span class="mobile-menu-item-title">Установить PWA</span>
+          <span class="mobile-menu-item-sub">Добавить ярлык на рабочий стол телефона</span>
+        </div>
+      </button>
+
+      <button id="mobile-btn-order" class="mobile-menu-item">
+        <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+        <div class="mobile-menu-item-text">
+          <span class="mobile-menu-item-title">Порядок и состав камер</span>
+          <span class="mobile-menu-item-sub">Перетаскивание и скрытие камер</span>
+        </div>
+      </button>
+
+      <button id="mobile-btn-add" class="mobile-menu-item">
+        <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        <div class="mobile-menu-item-text">
+          <span class="mobile-menu-item-title">Добавить камеру</span>
+          <span class="mobile-menu-item-sub">Подключить новый поток</span>
+        </div>
+      </button>
+
+      <div class="mobile-menu-item" style="cursor:default;">
+        <svg viewBox="0 0 24 24"><path d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42C16.07 4.74 14.12 4 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9 9-4.03 9-9c0-2.12-.74-4.07-1.97-5.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
+        <div class="mobile-menu-item-text" style="flex:1;">
+          <span class="mobile-menu-item-title">Буфер воспроизведения</span>
+          <span class="mobile-menu-item-sub">Задержка в браузере</span>
+        </div>
+        <select id="mobile-buffer-select" class="stream-select" style="max-width:120px;">
+          <option value="0.5">0.5 сек</option>
+          <option value="1" selected>1 сек</option>
+          <option value="2">2 сек</option>
+          <option value="4">4 сек</option>
+        </select>
+      </div>
+
+      <a href="/monobuket-tv.apk" download class="mobile-menu-item">
+        <svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 1.99-.9 1.99-2L23 5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg>
+        <div class="mobile-menu-item-text">
+          <span class="mobile-menu-item-title">Скачать ТВ App (.apk)</span>
+          <span class="mobile-menu-item-sub">Для Android TV и приставок</span>
+        </div>
+      </a>
+
+      <button id="mobile-btn-tv-settings" class="mobile-menu-item">
+        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+        <div class="mobile-menu-item-text">
+          <span class="mobile-menu-item-title">Настройки ТВ</span>
+          <span class="mobile-menu-item-sub">Буфер и часы на телевизоре</span>
+        </div>
+      </button>
+
+      <button id="mobile-btn-fullscreen" class="mobile-menu-item">
+        <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+        <div class="mobile-menu-item-text">
+          <span class="mobile-menu-item-title">Во весь экран</span>
+          <span class="mobile-menu-item-sub">Полноэкранный режим браузера</span>
+        </div>
+      </button>
     </div>
   </div>
 </div>
@@ -1450,6 +1661,61 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
   });
 });
 
+// Mobile Action Sheet menu
+const mobileMenuBtn = document.getElementById('btn-mobile-menu');
+const mobileMenuModal = document.getElementById('modal-mobile-menu');
+const mobileBtnOrder = document.getElementById('mobile-btn-order');
+const mobileBtnAdd = document.getElementById('mobile-btn-add');
+const mobileBtnTvSettings = document.getElementById('mobile-btn-tv-settings');
+const mobileBtnFullscreen = document.getElementById('mobile-btn-fullscreen');
+const mobileBufferSelect = document.getElementById('mobile-buffer-select');
+
+if (mobileMenuBtn && mobileMenuModal) {
+  mobileMenuBtn.addEventListener('click', () => {
+    if (mobileBufferSelect && selector) {
+      mobileBufferSelect.value = selector.value;
+    }
+    mobileMenuModal.classList.add('open');
+  });
+}
+
+if (mobileBtnOrder) {
+  mobileBtnOrder.addEventListener('click', () => {
+    mobileMenuModal.classList.remove('open');
+    if (editBtn) editBtn.click();
+  });
+}
+
+if (mobileBtnAdd) {
+  mobileBtnAdd.addEventListener('click', () => {
+    mobileMenuModal.classList.remove('open');
+    if (addBtn) addBtn.click();
+  });
+}
+
+if (mobileBtnTvSettings) {
+  mobileBtnTvSettings.addEventListener('click', () => {
+    mobileMenuModal.classList.remove('open');
+    if (tvSettingsBtn) tvSettingsBtn.click();
+  });
+}
+
+if (mobileBtnFullscreen) {
+  mobileBtnFullscreen.addEventListener('click', () => {
+    mobileMenuModal.classList.remove('open');
+    if (fullScreenBtn) fullScreenBtn.click();
+  });
+}
+
+if (mobileBufferSelect) {
+  mobileBufferSelect.addEventListener('change', () => {
+    if (selector) {
+      selector.value = mobileBufferSelect.value;
+      selector.dispatchEvent(new Event('change'));
+    }
+  });
+}
+
 addDevice.addEventListener('change', () => {
   if (addDevice.value === 'custom_stream') {
     nvrFields.style.display = 'none';
@@ -1509,8 +1775,26 @@ function layoutGrid() {
   if (!n) return;
   const width = grid.clientWidth;
   const height = grid.clientHeight;
+  const isMobile = window.innerWidth <= 768;
+  const isPortrait = height > width;
+
+  if (isMobile && isPortrait) {
+    grid.style.gridTemplateColumns = '1fr';
+    grid.style.gridTemplateRows = 'none';
+    grid.style.gridAutoRows = 'auto';
+    grid.style.gap = '12px';
+    return;
+  }
+
+  if (isMobile && !isPortrait) {
+    grid.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
+    grid.style.gridTemplateRows = 'none';
+    grid.style.gridAutoRows = 'auto';
+    grid.style.gap = '8px';
+    return;
+  }
+
   const gap = 10;
-  
   const maxColumns = Math.min(n, Math.max(1, Math.floor((width + gap) / 280)));
   let best = {area: -1, columns: 1, rows: n};
 
@@ -1530,6 +1814,8 @@ function layoutGrid() {
   grid.style.gridTemplateRows = scroll
     ? `repeat(${best.rows}, ${Math.max(160, Math.round(best.tileWidth * 9 / 16))}px)`
     : `repeat(${best.rows}, minmax(0, 1fr))`;
+  grid.style.gridAutoRows = '';
+  grid.style.gap = `${gap}px`;
 }
 
 let layoutFrame = 0;
@@ -1540,6 +1826,7 @@ const scheduleLayout = () => {
 
 if (window.ResizeObserver) new ResizeObserver(scheduleLayout).observe(grid);
 window.addEventListener('resize', scheduleLayout);
+window.addEventListener('orientationchange', () => setTimeout(scheduleLayout, 100));
 if (window.visualViewport) window.visualViewport.addEventListener('resize', scheduleLayout);
 
 const player = (id) => `${location.origin}/player.html?src=${encodeURIComponent(id)}&go2rtc=${currentCfg.go2rtc}&buffer=${selector.value}&v=10`;
@@ -1564,15 +1851,21 @@ function renderGrid() {
     const cell = document.createElement('div');
     cell.className = 'cell';
     cell.setAttribute('tabindex', '0');
-    cell.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        zoomBtn.click();
-        e.preventDefault();
-      }
-    });
     cell.dataset.index = index;
     cell.dataset.id = c.id;
     cell.setAttribute('draggable', 'false');
+
+    cell.addEventListener('click', (e) => {
+      if (e.target.closest('.cell-header') || isEditMode) return;
+      openSingleCam(c);
+    });
+
+    cell.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        openSingleCam(c);
+        e.preventDefault();
+      }
+    });
 
     // Native video-stream player in DOM (no iframes, minimal RAM)
     const playerElem = document.createElement('video-stream');
@@ -1633,8 +1926,9 @@ function renderGrid() {
     });
 
     // Stream selector dropdown
+    let select = null;
     if (kinds.length > 1) {
-      const select = document.createElement('select');
+      select = document.createElement('select');
       select.className = 'stream-select';
       select.setAttribute('aria-label', `Поток: ${c.title}`);
 
@@ -1659,44 +1953,9 @@ function renderGrid() {
     zoomBtn.className = 'cell-btn';
     zoomBtn.setAttribute('title', 'Развернуть камеру');
     zoomBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>';
-    
-    let isSingleFull = false;
-    zoomBtn.addEventListener('click', () => {
-      isSingleFull = !isSingleFull;
-      if (isSingleFull) {
-        cell.classList.add('fullscreen-mode');
-        zoomBtn.setAttribute('title', 'Свернуть камеру');
-        zoomBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-14v3h3v2h-5V5h-2z"/></svg>';
-        playerElem.mode = webrtc,mse;
-        // Seamlessly switch to HD Main stream when maximized
-        if (streams.main) {
-          playerElem.src = `${wsProto}//${wsHost}/api/ws?src=${encodeURIComponent(streams.main)}${tokenParam}`;
-        }
-      } else {
-        cell.classList.remove('fullscreen-mode');
-        zoomBtn.setAttribute('title', 'Развернуть камеру');
-        zoomBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>';
-        playerElem.mode = isTv ? 'mjpeg' : 'webrtc,mse';
-        // Revert to selected grid stream (Sub / Mobile)
-        const currentKind = (select ? select.value : selected);
-        playerElem.src = `${wsProto}//${wsHost}/api/ws?src=${encodeURIComponent(streams[currentKind])}${tokenParam}`;
-      }
-    });
-
-    // Double-tap or double-click to toggle fullscreen
-    let lastCellTap = 0;
-    cell.addEventListener('touchend', (e) => {
-      if (e.target.closest('.cell-header')) return;
-      const now = Date.now();
-      if (now - lastCellTap < 320 && now - lastCellTap > 0) {
-        zoomBtn.click();
-        e.preventDefault();
-      }
-      lastCellTap = now;
-    });
-    cell.addEventListener('dblclick', (e) => {
-      if (e.target.closest('.cell-header')) return;
-      zoomBtn.click();
+    zoomBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openSingleCam(c);
     });
 
     actions.append(dragHandle, removeBtn, zoomBtn);
@@ -1752,7 +2011,9 @@ const MOSAIC_ORDER = [
   'lenina_4', 'lenina_6', 'ezviz_fridge_entry', 'ezviz_general'
 ];
 
-let currentViewMode = preferences.get('view-mode') || 'mosaic';
+const isMobileDevice = window.innerWidth <= 768 || /iphone|ipad|ipod|android/i.test(navigator.userAgent);
+const defaultMode = (isMobileDevice && window.innerHeight > window.innerWidth) ? 'grid' : 'mosaic';
+let currentViewMode = preferences.get('view-mode') || defaultMode;
 let activeSingleCam = null;
 
 const mosaicView = document.getElementById('mosaic-view');
