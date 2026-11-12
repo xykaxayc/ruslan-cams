@@ -295,6 +295,231 @@
     border-radius: 3px;
   }
 
+  /* View Mode Toggle */
+  .view-mode-toggle {
+    display: inline-flex;
+    align-items: center;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 2px;
+    gap: 2px;
+  }
+  .btn-toggle {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 5px 9px;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: calc(var(--radius-sm) - 2px);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+  }
+  .btn-toggle:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .btn-toggle.active {
+    background: var(--accent);
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+  }
+  .btn-toggle svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+  }
+
+  /* Mosaic View (1 Stream / 15 FPS) */
+  .mosaic-view {
+    flex: 1 1 auto;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-main);
+    overflow: hidden;
+  }
+  .mosaic-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    max-width: calc((100vh - 68px) * 16 / 9);
+    max-height: calc(100vw * 9 / 16);
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+    border: 1px solid var(--border-subtle);
+  }
+  .mosaic-player {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+  }
+  .mosaic-overlay {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    pointer-events: none;
+  }
+  .mosaic-tile {
+    pointer-events: auto;
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mosaic-tile:hover, .mosaic-tile:focus-visible {
+    background: rgba(37, 99, 235, 0.12);
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.35);
+  }
+  .mosaic-tile:active {
+    background: rgba(37, 99, 235, 0.25);
+  }
+  .mosaic-tile .tile-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(10, 12, 16, 0.82);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-primary);
+    border: 1px solid var(--border-subtle);
+    width: fit-content;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  }
+  .mosaic-tile .tile-zoom-hint {
+    align-self: flex-end;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--accent);
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-weight: 600;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: all 0.18s ease;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+    pointer-events: none;
+  }
+  .mosaic-tile:hover .tile-zoom-hint,
+  .mosaic-tile:focus-visible .tile-zoom-hint {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Fullscreen Single Camera Modal */
+  .single-cam-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    animation: singleFadeIn 0.15s ease-out;
+  }
+  @keyframes singleFadeIn {
+    from { opacity: 0; transform: scale(0.99); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .single-cam-header {
+    height: 48px;
+    background: rgba(18, 22, 31, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    flex-shrink: 0;
+    z-index: 10;
+  }
+  .single-cam-title-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .quality-badge {
+    background: rgba(16, 185, 129, 0.18);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: #34d399;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: var(--radius-sm);
+  }
+  .single-cam-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .single-cam-body {
+    flex: 1 1 auto;
+    position: relative;
+    width: 100%;
+    height: calc(100% - 48px);
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .single-cam-body video-stream {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+  }
+  .btn-close-single {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    border: 1px solid var(--border-subtle);
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .btn-close-single:hover {
+    background: rgba(239, 68, 68, 0.85);
+    border-color: transparent;
+    color: #fff;
+  }
+
   /* Camera Card */
   .cell {
     position: relative;
@@ -864,6 +1089,17 @@ if (closeIosBtn) {
       <span class="btn-text">Распорядок</span>
     </button>
     
+    <div class="view-mode-toggle" id="view-mode-toggle">
+      <button id="btn-mode-mosaic" class="btn-toggle active" title="1 легкий поток на 8 камер (15 FPS, экономия трафика и стабильность)">
+        <svg viewBox="0 0 24 24"><path d="M3 3v8h8V3H3zm6 6H5V5h4v4zm-6 4v8h8v-8H3zm6 6H5v-4h4v4zm4-16v8h8V3h-8zm6 6h-4V5h4v4zm-6 4v8h8v-8h-8zm6 6h-4v-4h4v4z"/></svg>
+        <span class="btn-text">15 FPS Мозаика</span>
+      </button>
+      <button id="btn-mode-grid" class="btn-toggle" title="Отдельные независимые плееры для каждой камеры">
+        <svg viewBox="0 0 24 24"><path d="M4 4h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 10h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 16h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4z"/></svg>
+        <span class="btn-text">Сетка</span>
+      </button>
+    </div>
+
     <div class="control-group">
       <span>Буфер:</span>
       <div class="custom-select">
@@ -883,7 +1119,40 @@ if (closeIosBtn) {
 </header>
 
 <main id="grid-container">
-  <div id="grid" aria-label="Камеры наблюдения"></div>
+  <!-- Mosaic View (1 Stream / 15 FPS) -->
+  <div id="mosaic-view" class="mosaic-view">
+    <div class="mosaic-wrapper">
+      <video-stream id="mosaic-player" class="mosaic-player" background mode="webrtc,mse"></video-stream>
+      <div id="mosaic-overlay" class="mosaic-overlay"></div>
+    </div>
+  </div>
+
+  <!-- Standard Multi-Stream Grid View -->
+  <div id="grid" aria-label="Камеры наблюдения" style="display:none;"></div>
+
+  <!-- Fullscreen Single Camera Modal -->
+  <div id="single-cam-modal" class="single-cam-modal" style="display:none;">
+    <div class="single-cam-header">
+      <div class="single-cam-title-badge">
+        <span class="camera-dot"></span>
+        <span id="single-cam-title">Камера</span>
+        <span class="quality-badge" id="single-cam-badge">HD Main · 25 FPS</span>
+      </div>
+      <div class="single-cam-actions">
+        <select id="single-cam-stream-select" class="stream-select" aria-label="Поток"></select>
+        <button id="btn-single-fullscreen" class="btn btn-icon" title="На весь экран" aria-label="Полноэкранный режим">
+          <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+        </button>
+        <button id="btn-close-single" class="btn btn-close-single" title="Назад к мозаике (Esc)">
+          <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor;"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+          <span class="btn-text">Назад к мозаике</span>
+        </button>
+      </div>
+    </div>
+    <div class="single-cam-body">
+      <video-stream id="single-cam-player" class="single-cam-player" mode="webrtc,mse"></video-stream>
+    </div>
+  </div>
 </main>
 
 <!-- Modal: Add Camera -->
@@ -1091,7 +1360,7 @@ if (selector) {
   selector.value = ['0.5','1','2','4','6','10'].includes(savedBuffer) ? savedBuffer : '1';
   selector.addEventListener('change', () => {
     preferences.set('cam-buffer', selector.value);
-    document.querySelectorAll('video-rtc').forEach(el => {
+    document.querySelectorAll('video-stream').forEach(el => {
       el.bufferSeconds = parseFloat(selector.value);
     });
     showToast(`Буфер в браузере: ${selector.value} сек`);
@@ -1101,6 +1370,9 @@ if (selector) {
 // Edit Mode
 const editBtn = document.getElementById('btn-edit-order');
 editBtn.addEventListener('click', () => {
+  if (currentViewMode === 'mosaic') {
+    switchViewMode('grid');
+  }
   isEditMode = !isEditMode;
   document.body.classList.toggle('edit-mode', isEditMode);
   editBtn.classList.toggle('active', isEditMode);
@@ -1474,6 +1746,212 @@ function renderGrid() {
   layoutGrid();
 }
 
+// --- Mosaic (15 FPS, 1 Stream) & Single HD Camera Logic ---
+const MOSAIC_ORDER = [
+  'karamova_5', 'karamova_7', 'kirtbaya_2', 'kirtbaya_3',
+  'lenina_4', 'lenina_6', 'ezviz_fridge_entry', 'ezviz_general'
+];
+
+let currentViewMode = preferences.get('view-mode') || 'mosaic';
+let activeSingleCam = null;
+
+const mosaicView = document.getElementById('mosaic-view');
+const mosaicPlayer = document.getElementById('mosaic-player');
+const mosaicOverlay = document.getElementById('mosaic-overlay');
+const singleCamModal = document.getElementById('single-cam-modal');
+const singleCamPlayer = document.getElementById('single-cam-player');
+const singleCamTitle = document.getElementById('single-cam-title');
+const singleCamBadge = document.getElementById('single-cam-badge');
+const singleCamStreamSelect = document.getElementById('single-cam-stream-select');
+const btnSingleFullscreen = document.getElementById('btn-single-fullscreen');
+const btnCloseSingle = document.getElementById('btn-close-single');
+const btnModeMosaic = document.getElementById('btn-mode-mosaic');
+const btnModeGrid = document.getElementById('btn-mode-grid');
+
+function getWsParams() {
+  const isLocal = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
+  const wsHost = isLocal ? (location.hostname + ':' + (currentCfg?.go2rtc || 1984)) : location.host;
+  const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const urlParams = new URLSearchParams(window.location.search);
+  const tokenParam = "&token=" + encodeURIComponent(urlParams.get('token') || 'ruslan2026');
+  return { wsProto, wsHost, tokenParam };
+}
+
+function startMosaic() {
+  if (!mosaicPlayer) return;
+  const { wsProto, wsHost, tokenParam } = getWsParams();
+  mosaicPlayer.bufferSeconds = parseFloat(selector?.value || '1');
+  mosaicPlayer.mode = 'webrtc,mse';
+  mosaicPlayer.src = `${wsProto}//${wsHost}/api/ws?src=mosaic_all${tokenParam}`;
+}
+
+function stopMosaic() {
+  if (mosaicPlayer) mosaicPlayer.src = '';
+}
+
+function renderMosaicOverlay() {
+  if (!mosaicOverlay) return;
+  mosaicOverlay.innerHTML = '';
+  MOSAIC_ORDER.forEach((camId, index) => {
+    const cam = currentCams.find(c => c.id === camId) || {
+      id: camId,
+      title: camId,
+      streams: { main: camId, sub: camId }
+    };
+    
+    const tile = document.createElement('div');
+    tile.className = 'mosaic-tile';
+    tile.dataset.id = camId;
+    tile.dataset.index = index;
+    tile.setAttribute('tabindex', '0');
+    tile.setAttribute('role', 'button');
+    tile.setAttribute('aria-label', `Камера: ${cam.title}`);
+
+    const badge = document.createElement('div');
+    badge.className = 'tile-badge';
+    badge.innerHTML = `<span class="camera-dot"></span><span>${cam.title}</span>`;
+
+    const hint = document.createElement('div');
+    hint.className = 'tile-zoom-hint';
+    hint.innerHTML = `<svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:currentColor;"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg><span>Full HD</span>`;
+
+    tile.append(badge, hint);
+
+    const onOpen = () => openSingleCam(cam);
+    tile.addEventListener('click', onOpen);
+    tile.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onOpen();
+      }
+    });
+
+    mosaicOverlay.appendChild(tile);
+  });
+}
+
+function openSingleCam(cam) {
+  activeSingleCam = cam;
+  singleCamTitle.textContent = cam.title;
+  
+  const streams = cam.streams || { default: cam.id };
+  const kinds = Object.keys(streams).sort((a, b) => (order[a] ?? 4) - (order[b] ?? 4));
+  
+  // Prefer Main HD stream for full inspection, otherwise sub or default
+  const preferred = streams.main ? 'main' : (streams.sub ? 'sub' : kinds[0]);
+  
+  singleCamStreamSelect.innerHTML = '';
+  kinds.forEach(kind => {
+    const opt = document.createElement('option');
+    opt.value = kind;
+    opt.textContent = labels[kind] || kind;
+    if (kind === preferred) opt.selected = true;
+    singleCamStreamSelect.appendChild(opt);
+  });
+
+  const updateQualityBadge = (kind) => {
+    if (kind === 'main') {
+      singleCamBadge.textContent = 'HD Main · 25 FPS';
+      singleCamBadge.style.color = '#34d399';
+    } else {
+      singleCamBadge.textContent = 'Sub поток';
+      singleCamBadge.style.color = '#94a3b8';
+    }
+  };
+  updateQualityBadge(preferred);
+
+  singleCamStreamSelect.onchange = () => {
+    const kind = singleCamStreamSelect.value;
+    updateQualityBadge(kind);
+    const { wsProto, wsHost, tokenParam } = getWsParams();
+    singleCamPlayer.src = `${wsProto}//${wsHost}/api/ws?src=${encodeURIComponent(streams[kind])}${tokenParam}`;
+  };
+
+  // Pause mosaic in background to save 100% bandwidth for single stream
+  stopMosaic();
+
+  const { wsProto, wsHost, tokenParam } = getWsParams();
+  singleCamPlayer.bufferSeconds = parseFloat(selector?.value || '1');
+  singleCamPlayer.mode = 'webrtc,mse';
+  singleCamPlayer.src = `${wsProto}//${wsHost}/api/ws?src=${encodeURIComponent(streams[preferred])}${tokenParam}`;
+
+  singleCamModal.style.display = 'flex';
+  try {
+    history.pushState({ singleCam: true }, '');
+  } catch (_) {}
+}
+
+function closeSingleCam(useHistory = true) {
+  if (!activeSingleCam) return;
+  activeSingleCam = null;
+  singleCamPlayer.src = '';
+  singleCamModal.style.display = 'none';
+
+  if (currentViewMode === 'mosaic') {
+    startMosaic();
+  }
+
+  if (useHistory && window.history.state?.singleCam) {
+    try { history.back(); } catch (_) {}
+  }
+}
+
+if (btnCloseSingle) {
+  btnCloseSingle.addEventListener('click', () => closeSingleCam(true));
+}
+
+if (btnSingleFullscreen) {
+  btnSingleFullscreen.addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+      singleCamModal.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  });
+}
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && activeSingleCam) {
+    closeSingleCam(true);
+  }
+});
+
+window.addEventListener('popstate', () => {
+  if (activeSingleCam) {
+    closeSingleCam(false);
+  }
+});
+
+function switchViewMode(mode) {
+  currentViewMode = mode;
+  preferences.set('view-mode', mode);
+
+  if (btnModeMosaic) btnModeMosaic.classList.toggle('active', mode === 'mosaic');
+  if (btnModeGrid) btnModeGrid.classList.toggle('active', mode === 'grid');
+
+  if (mode === 'mosaic') {
+    grid.style.display = 'none';
+    grid.innerHTML = '';
+    
+    mosaicView.style.display = 'flex';
+    renderMosaicOverlay();
+    startMosaic();
+  } else {
+    stopMosaic();
+    mosaicView.style.display = 'none';
+
+    grid.style.display = 'grid';
+    renderGrid();
+  }
+}
+
+if (btnModeMosaic) {
+  btnModeMosaic.addEventListener('click', () => switchViewMode('mosaic'));
+}
+if (btnModeGrid) {
+  btnModeGrid.addEventListener('click', () => switchViewMode('grid'));
+}
+
 // Initial Data Fetch
 let lastSignature = '';
 fetch('grid.json?' + Date.now()).then(r => {
@@ -1483,7 +1961,7 @@ fetch('grid.json?' + Date.now()).then(r => {
   currentCfg = cfg;
   currentCams = [...cfg.cams];
   lastSignature = JSON.stringify(cfg);
-  renderGrid();
+  switchViewMode(currentViewMode);
 
   // Watch for configuration updates made from other devices
   setInterval(async () => {
@@ -1500,7 +1978,11 @@ fetch('grid.json?' + Date.now()).then(r => {
           lastSignature = sig;
           currentCfg = fresh;
           currentCams = [...fresh.cams];
-          renderGrid();
+          if (currentViewMode === 'mosaic') {
+            renderMosaicOverlay();
+          } else {
+            renderGrid();
+          }
         }
       }
     } catch (_) {}

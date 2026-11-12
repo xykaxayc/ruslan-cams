@@ -94,18 +94,18 @@ def build_ffmpeg_cmd(active_streams):
             # Scale each tile to 480x540 (half height of 1080p for 2 rows)
             filter_inputs.append(
                 f"[{i}:v]scale=480:540:force_original_aspect_ratio=decrease,"
-                f"pad=480:540:(ow-iw)/2:(oh-ih)/2:color=0x18181b,fps=12,settb=AVTB,setpts=N/(12*TB)[v{i}]"
+                f"pad=480:540:(ow-iw)/2:(oh-ih)/2:color=0x18181b,fps=15,settb=AVTB,setpts=N/(15*TB)[v{i}]"
             )
         else:
             # Fallback to offline placeholder
             inputs.extend([
                 "-loop", "1",
-                "-framerate", "12",
+                "-framerate", "15",
                 "-i", placeholder
             ])
             filter_inputs.append(
                 f"[{i}:v]scale=480:540:force_original_aspect_ratio=decrease,"
-                f"pad=480:540:(ow-iw)/2:(oh-ih)/2:color=0x18181b,fps=12,settb=AVTB,setpts=N/(12*TB)[v{i}]"
+                f"pad=480:540:(ow-iw)/2:(oh-ih)/2:color=0x18181b,fps=15,settb=AVTB,setpts=N/(15*TB)[v{i}]"
             )
 
     # Grid layout: 4 columns x 2 rows = 1920x1080
@@ -122,11 +122,11 @@ def build_ffmpeg_cmd(active_streams):
         "-threads", "2",
         "-preset", "ultrafast",
         "-tune", "zerolatency",
-        "-b:v", "1800k",
-        "-maxrate", "2400k",
-        "-bufsize", "1200k",
+        "-b:v", "2000k",
+        "-maxrate", "2600k",
+        "-bufsize", "1500k",
         "-pix_fmt", "yuv420p",
-        "-g", "24",
+        "-g", "30",
         "-f", "rtsp",
         "-rtsp_transport", "tcp",
         "rtsp://127.0.0.1:8554/mosaic_all"
