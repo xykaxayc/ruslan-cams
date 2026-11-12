@@ -60,8 +60,11 @@ def get_active_go2rtc_streams():
                 cid = cam["id"]
                 key = get_stream_key(data, cid)
                 if key and key in data:
-                    info = data.get(key)
-                    if info and info.get("producers"):
+                    info = data.get(key) or {}
+                    producers = info.get("producers") or []
+                    has_bytes = any((p.get("bytes_recv", 0) or 0) > 0 for p in producers)
+                    has_receivers = any(len(p.get("receivers") or []) > 0 for p in producers)
+                    if producers and has_bytes and has_receivers:
                         active[cid] = key
             return active
     except Exception as e:
@@ -81,7 +84,7 @@ def build_ffmpeg_cmd(active_streams):
             inputs.extend([
                 "-rtsp_transport", "tcp",
                 "-timeout", "5000000",
-                "-thread_queue_size", "512",
+                "-thread_queue_size", "1024",
                 "-probesize", "10000000",
                 "-analyzeduration", "10000000",
                 "-fflags", "+genpts+discardcorrupt",
@@ -116,6 +119,7 @@ def build_ffmpeg_cmd(active_streams):
         "-filter_complex", filter_graph,
         "-map", "[outv]",
         "-c:v", "libx264",
+        "-threads", "2",
         "-preset", "ultrafast",
         "-tune", "zerolatency",
         "-b:v", "1800k",

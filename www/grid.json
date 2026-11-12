@@ -49,7 +49,7 @@
    "default": "sub",
    "streams": {
     "sub": "lenina_4",
-    "main": "lenina_4_main"
+    "main": "lenina_4"
    }
   },
   {

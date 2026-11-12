@@ -415,15 +415,18 @@ def publish_streams(dev_streams):
             # Источник: прямой RTSP через туннель
             streams[sid + "_src"] = f"rtsp://{USER}:${{{dev_var}}}@127.0.0.1:{lp}{path}"
             if cam["device"] == "lenina" and cam["channel"] == 4:
-                # Ленина 4 уже нативно в H.264
-                streams[sid] = f"{sid}_src"
+                # Ленина 4 уже нативно в H.264 (720p). /ch04/0 не поддерживается регистратором.
+                streams[sid] = [
+                    f"rtsp://127.0.0.1:8554/{cam['id']}_src",
+                    f"ffmpeg:rtsp://127.0.0.1:8554/{cam['id']}_src#video=h264#raw=-preset ultrafast -tune zerolatency"
+                ]
             else:
                 # Мульти-источник:
                 # 1. Нативный H.265 (HEVC) напрямую (0% CPU для Safari, Android TV, VLC)
                 # 2. Фолбэк на ultrafast ffmpeg только если клиент не умеет HEVC
                 streams[sid] = [
-                    f"{sid}_src",
-                    f"ffmpeg:{sid}_src#video=h264#raw=-preset ultrafast -tune zerolatency"
+                    f"rtsp://127.0.0.1:8554/{sid}_src",
+                    f"ffmpeg:rtsp://127.0.0.1:8554/{sid}_src#video=h264#raw=-preset ultrafast -tune zerolatency"
                 ]
             grid_streams[kind] = sid
             stream_dev[sid] = cam["device"]
@@ -431,8 +434,10 @@ def publish_streams(dev_streams):
 
     for cam in CFG.get("ezviz", []):
         sid = cam["id"]
-        # EZVIZ поставляет MPEG-TS H.264: отдаем напрямую без промежуточного RTSP-loopback
-        streams[sid] = f"http://127.0.0.1:8560/{sid}.ts"
+        # EZVIZ MPEG-TS transcode through ffmpeg ensures valid SDP and compliant H.264
+        streams[sid] = [
+            f"ffmpeg:http://127.0.0.1:8560/{sid}.ts#video=h264#raw=-preset ultrafast -tune zerolatency"
+        ]
         stream_dev[sid] = "ezviz"
         grid.append({"id": sid, "title": cam["title"], "default": "default", "streams": {"default": sid}})
 
@@ -664,11 +669,14 @@ def health_loop(stream_dev, dev_streams, passwords):
                             if owner == dev:
                                 prev.pop(cam, None)
             if CFG.get("ezviz"):
-                # Only restart ezviz bridge if ALL ezviz cameras are stalled (none active)
-                ezviz_down = ("ezviz" in stalled) and ("ezviz" not in active)
-                fails["ezviz"] = fails.get("ezviz", 0) + 1 if ezviz_down else 0
-                if fails["ezviz"] >= 6:
-                    log.warning("EZVIZ: все видеопотоки зависли — перезапускаю мост")
+                # Restart ezviz bridge if any ezviz stream is stalled for 2 checks (60s)
+                ezviz_stalled = ("ezviz" in stalled) or any(
+                    dev == "ezviz" and cam in prev and prev[cam][3] and (prev[cam][0] == 0 or kbps == 0)
+                    for cam, dev, kbps, viewers in rows if dev == "ezviz"
+                )
+                fails["ezviz"] = fails.get("ezviz", 0) + 1 if ezviz_stalled else 0
+                if fails["ezviz"] >= 2:
+                    log.warning("EZVIZ: видеопоток завис — перезапускаю мост")
                     start_ezviz()
                     fails["ezviz"] = 0
                     for cam, owner in stream_dev.items():

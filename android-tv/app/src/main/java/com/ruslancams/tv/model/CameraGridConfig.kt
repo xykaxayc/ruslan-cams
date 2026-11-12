@@ -32,7 +32,7 @@ data class CameraItem(
             "karamova_7" -> "rtsp://$baseUrl:8554/karamova_7_main_src"
             "kirtbaya_2" -> "rtsp://$baseUrl:8554/kirtbaya_2_main_src"
             "kirtbaya_3" -> "rtsp://$baseUrl:8554/kirtbaya_3_main_src"
-            "lenina_4" -> "rtsp://$baseUrl:8554/lenina_4_main_src"
+            "lenina_4" -> "rtsp://$baseUrl:8554/lenina_4_src"
             "lenina_6" -> "rtsp://$baseUrl:8554/lenina_6_main_src"
             "ezviz_fridge_entry" -> "rtsp://$baseUrl:8554/ezviz_fridge_entry"
             "ezviz_general" -> "rtsp://$baseUrl:8554/ezviz_general"

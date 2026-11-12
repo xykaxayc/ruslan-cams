@@ -70,10 +70,8 @@ streams:
     - rtsp://admin:${RL_PASS_LENINA}@127.0.0.1:41002/ch04/1
   lenina_4:
     - lenina_4_src
-  lenina_4_main_src:
-    - rtsp://admin:${RL_PASS_LENINA}@127.0.0.1:41002/ch04/0
   lenina_4_main:
-    - lenina_4_main_src
+    - lenina_4_src
   lenina_6_src:
     - rtsp://admin:${RL_PASS_LENINA}@127.0.0.1:41002/ch06/1
   lenina_6:
